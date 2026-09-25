@@ -3,7 +3,7 @@
 One request per school: its sitemap.xml lists every post URL with a lastmod
 date. robots.txt disallows /Timkiem (site search), so we don't use it.
 
-Usage: python -m pipeline.survey [--schools data/schools.csv] [--out data/coverage.csv]
+Usage: uv run python -m pipeline.survey [--schools data/schools.csv] [--out data/coverage.csv]
                                 [--year-start 2026-08-24] [--limit N]
 """
 import argparse

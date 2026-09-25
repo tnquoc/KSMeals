@@ -5,22 +5,51 @@ App giúp phụ huynh TP.HCM theo dõi thực đơn bán trú của con, dữ li
 ## Structure
 
 ```
-pipeline/   Python: school discovery, coverage survey, (later) menu crawl + OCR
-data/      Generated CSVs (schools.csv, coverage.csv)
+pipeline/             Python data pipeline (see below)
+data/                 schools.csv, coverage.csv (from discover/survey)
+supabase/migrations/  database schema, run in order in the Supabase SQL Editor
+.github/workflows/    daily.yml (05:00 VN), connectivity.yml (manual check)
+roadmap.md            plan and progress
 ```
 
-## Crawler
+## Setup
+
+Uses [uv](https://docs.astral.sh/uv/): Python version from `.python-version`, exact
+dependency versions in `pyproject.toml` (`==`) and `uv.lock`.
+
+```bash
+uv sync
+uv run python -m pipeline.test_parsers
+```
+
+`.env` (never committed):
+
+```
+GEMINI_API_KEY=...
+SUPABASE_URL=https://<ref>.supabase.co
+SUPABASE_SECRET_KEY=sb_secret_...
+SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
+```
+
+Optional: `LLM_MODEL` (default `gemini-3.5-flash-lite`), `LLM_BASE_URL` (any OpenAI-compatible
+endpoint), `LLM_MIN_INTERVAL` (seconds between LLM calls, default 12).
+
+Add a dependency: `uv add <package>==<version>` (keep exact pins).
+
+## Pipeline
 
 Most public schools in HCMC run on the shared Quang Ich CMS at `<code>.hcm.edu.vn`.
 
-- `pipeline/discover.py`: walks the 168 ward/commune portals (`phuong*`, `xa*`, `dackhu*`); each portal's nav lists its schools by level (`mn`, `th`, `thcs`). Output: `data/schools.csv`.
-- `pipeline/survey.py`: one `sitemap.xml` request per school. Menu posts are detected by URL slug (`thuc-don`, `suat-an`, ...). Output: `data/coverage.csv` plus a summary by level.
+| Step | Command | What it does |
+|---|---|---|
+| discover | `uv run python -m pipeline.discover` | Walk the 168 ward portals → `data/schools.csv` (1,293 schools) |
+| survey | `uv run python -m pipeline.survey` | One `sitemap.xml` per school → `data/coverage.csv` (who posts menus, how often) |
+| sync | `uv run python -m pipeline.sync` | School list → Supabase `schools` |
+| crawl | `uv run python -m pipeline.crawl --active-only` | New menu posts → Supabase `raw_posts` (pending) |
+| process | `uv run python -m pipeline.process` | Download images/PDF/Word/Excel, Gemini OCR, split into days → `menu_weeks`, `meals` |
 
-```bash
-pip install -r pipeline/requirements.txt
-python -m pipeline.test_parsers
-python -m pipeline.discover
-python -m pipeline.survey
-```
+All pipeline state lives in Supabase, so any run (local or GitHub Actions) resumes where the last
+one stopped, e.g. after the free Gemini quota runs out.
 
-Crawling rules: respect robots.txt (`/Timkiem` is disallowed, so no site search), max 4 concurrent requests, retries with backoff.
+Crawling rules: respect robots.txt (`/Timkiem` is disallowed, so no site search), max 2–4
+concurrent requests, retries with backoff.

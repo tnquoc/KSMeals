@@ -1,4 +1,4 @@
-"""Offline tests for the parsers. Run: python -m pipeline.test_parsers"""
+"""Offline tests for the parsers. Run: uv run python -m pipeline.test_parsers"""
 import json
 from datetime import date, timedelta
 from pathlib import Path

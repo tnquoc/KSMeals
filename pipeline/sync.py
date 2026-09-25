@@ -3,7 +3,7 @@
 Posts, OCR output and meals are written by crawl.py / process.py directly.
 The `active` flag is left alone here: process.py turns it on once a school has a published meal.
 
-Usage: python -m pipeline.sync
+Usage: uv run python -m pipeline.sync
 """
 import csv
 

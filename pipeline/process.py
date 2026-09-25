@@ -6,7 +6,7 @@ downloads their images/documents, and writes back:
   meals       one row per school/date/meal_type (+ tray photos)
   raw_posts   status -> published | needs_review | not_menu | failed
 
-Usage: python -m pipeline.process [--limit N] [--retry-review]
+Usage: uv run python -m pipeline.process [--limit N] [--retry-review]
 """
 import argparse
 import asyncio

@@ -1,6 +1,6 @@
 """Read a school menu image into structured JSON with a vision LLM.
 
-Usage (single image, for testing): python -m pipeline.ocr path/to/menu.png [--title "..."]
+Usage (single image, for testing): uv run python -m pipeline.ocr path/to/menu.png [--title "..."]
 """
 import argparse
 import base64

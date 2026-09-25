@@ -4,7 +4,7 @@ Every ward/commune portal (phuong*.hcm.edu.vn, xa*.hcm.edu.vn, dackhu*) links
 to all other ward portals, and its top nav lists the schools in that ward,
 grouped by level via `dsdonvi.aspx?codekhoi=mn|th|thcs`.
 
-Usage: python -m pipeline.discover [--seed phuongtansonhoa] [--out data/schools.csv]
+Usage: uv run python -m pipeline.discover [--seed phuongtansonhoa] [--out data/schools.csv]
 """
 import argparse
 import asyncio

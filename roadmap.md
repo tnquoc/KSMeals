@@ -158,7 +158,7 @@ chat_usage(device_id, date, count)
 |---|---|---|
 | App | Expo (React Native) | 1 codebase cho iOS và Android, build qua EAS không cần máy Mac |
 | Backend/DB | Supabase (Postgres, Storage, Edge Functions) | Không phải tự vận hành server, gói miễn phí đủ cho v1 |
-| Crawler | Python + httpx + BeautifulSoup, chạy bằng GitHub Actions | Không có server nào phải trông |
+| Crawler | Python 3.12 + httpx + BeautifulSoup, môi trường quản lý bằng **uv** (`pyproject.toml` ghim `==`, `uv.lock`), chạy bằng GitHub Actions | Không có server nào phải trông; cài đặt tái lập chính xác |
 | AI (OCR, dinh dưỡng, chat) | **Gemini** (API key từ Google AI Studio), qua endpoint tương thích OpenAI | Đọc ảnh tiếng Việt tốt, có gói miễn phí. Có thể đổi sang DeepSeek bằng cấu hình |
 | Push | Expo Notifications | Miễn phí, đơn giản |
 | Analytics | PostHog hoặc Firebase | Gói miễn phí |

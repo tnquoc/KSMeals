@@ -6,8 +6,8 @@ page images; .docx/.xlsx are converted to text. Legacy .doc/.xls are skipped for
 Only records new posts (status pending) in Supabase; downloading and OCR happen in
 process.py, so a run that stops early can resume anywhere from the database alone.
 
-Usage: python -m pipeline.crawl [--schools code1 code2 ... | --active-only | --status regular active]
-                                [--since-days 14]
+Usage: uv run python -m pipeline.crawl [--schools code1 code2 ... | --active-only | --status regular active]
+                                       [--since-days 14]
 """
 import argparse
 import asyncio
