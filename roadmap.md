@@ -4,7 +4,7 @@
 
 **Mục tiêu v1:** app iOS + Android cho phụ huynh TP.HCM xem thực đơn bán trú của trường con, có dinh dưỡng ước tính bằng AI và một chatbot nhỏ. Mục đích là trả lời một câu hỏi: **phụ huynh có mở app đều đặn không?**
 
-**Đang ở:** ✅ Phase 1 + 2 xong (pipeline tự chạy mỗi sáng, có dinh dưỡng và dị ứng; trang xem trước + duyệt). 👉 Tiếp: Phase 3, app Expo.
+**Đang ở:** 👉 Phase 3: app Expo chạy được (chọn trường, hôm nay, cả tuần, dinh dưỡng, dị ứng). Tiếp: thử trên iPhone, push buổi sáng, "báo tôi khi có".
 
 ---
 
@@ -103,16 +103,22 @@ Chạy: `uv run python -m pipeline.devserver` → http://127.0.0.1:8765
 
 ---
 
-## Phase 3: App mobile (Expo)
+## Phase 3: App mobile (Expo) 👉
 
-- [ ] Chọn trường (tìm theo tên/phường), lưu trên máy, không cần đăng nhập
-- [ ] Màn "Hôm nay": thực đơn, ảnh khay (nếu trường có đăng), link bài gốc
-- [ ] Lịch sử theo tuần
-- [ ] Chi tiết dinh dưỡng ước tính + nhận xét AI
-- [ ] Push thông báo buổi sáng (Expo Notifications)
+Thư mục `app/`, Expo SDK 57 + Expo Router, TypeScript. Chạy: `cd app && npx expo start`, quét QR bằng Expo Go.
+
+- [x] Chọn trường (tìm cả không dấu), lưu trên máy bằng AsyncStorage, không cần đăng nhập
+- [x] Màn "Hôm nay": thanh chọn T2–T6 (cuối tuần tự mở Thứ Hai tuần sau), thực đơn từng bữa, món nhóm theo loại, ảnh khay, link bài gốc
+- [x] Màn "Cả tuần": xem theo tuần, chuyển tuần trước/sau
+- [x] Chi tiết dinh dưỡng ước tính + nhận xét AI + nhãn dị ứng (kèm dòng lưu ý "xác nhận với nhà trường")
+- [x] Kéo để làm mới; đọc Supabase bằng publishable key (RLS)
+- [x] Kiểm tra: `tsc`, `expo lint`, `expo-doctor` 21/21; thử bản web trong trình duyệt
+- [ ] Chạy thử trên iPhone qua Expo Go
+- [ ] Push thông báo buổi sáng (Expo Notifications, cần development build)
 - [ ] Màn "Trường của bạn chưa được hỗ trợ" + nút "Báo tôi khi có"
-- [ ] Nút chia sẻ thực đơn hôm nay dạng ảnh (để phụ huynh tự lan truyền trong nhóm Zalo)
+- [ ] Nút chia sẻ thực đơn hôm nay dạng ảnh
 - [ ] Analytics (PostHog hoặc Firebase)
+- [ ] Icon, splash, tên hiển thị trên store
 
 ---
 

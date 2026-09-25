@@ -5,6 +5,7 @@ App giúp phụ huynh TP.HCM theo dõi thực đơn bán trú của con, dữ li
 ## Structure
 
 ```
+app/                  Expo SDK 57 mobile app (see app/README.md)
 pipeline/             Python data pipeline (see below)
 web/                  local viewer (/) and review tool (/review), served by pipeline.devserver
 data/                 schools.csv, coverage.csv (from discover/survey)
