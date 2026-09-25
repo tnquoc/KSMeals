@@ -3,6 +3,7 @@ import json
 from datetime import date, timedelta
 from pathlib import Path
 
+from pipeline.allergens import detect
 from pipeline.crawl import parse_post
 from pipeline.dates import parse_slug_range, parse_title_range
 from pipeline.discover import parse_schools, parse_ward_codes
@@ -143,6 +144,28 @@ def test_build_meals_trusts_date_confirmed_by_title():
 def test_build_meals_rejects_non_menu():
     rows, issues = build_meals({"kind": "tray_photo", "days": []}, "", "", date(2026, 9, 18))
     assert rows == [] and issues
+
+
+def test_allergen_keywords():
+    cases = {
+        "Đậu đũa cà rốt xào tôm": ["crustacean"],
+        "Cà rốt xào": [],                          # cà (carrot) is not cá (fish)
+        "Cá diêu hồng sốt cà chua": ["fish"],
+        "Sữa đậu nành Fami": ["soy"],              # soy milk is not dairy
+        "Rau câu sữa tươi": ["milk"],
+        "Yakult": ["milk"],                         # brand without the word "sữa"
+        "Mì gạo xào": [],                           # rice noodles, no gluten
+        "Miến gà": [],
+        "Hủ tíu mì gà": ["gluten"],
+        "Bánh flan": ["egg"],
+        "Chả mực hấp mỡ hành": ["mollusc"],
+        "Rau muống trộn mè rang": ["sesame"],
+        "Tương ớt": [],
+    }
+    for dish, expected in cases.items():
+        assert detect([dish]) == expected, (dish, detect([dish]))
+    # Ingredients suggested by the LLM count too (hidden egg and milk in a sponge cake).
+    assert detect(["Bánh bông lan chà bông", "bột mì", "trứng", "sữa"]) == ["egg", "milk", "gluten"]
 
 
 # post id -> (n images, doc extensions): one of each layout seen in the pilot.

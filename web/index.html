@@ -33,6 +33,11 @@
   .trays img { width: 72px; height: 54px; object-fit: cover; border-radius: 6px; border: 1px solid var(--line); }
   .source { font-size: 12px; margin-top: 8px; display: block; }
   .nodata { color: var(--muted); font-size: 13px; font-style: italic; }
+  .nutri { display: flex; gap: 8px; flex-wrap: wrap; align-items: baseline; font-size: 12px; margin-top: 4px; color: var(--muted); }
+  .nutri .kcal { font-weight: 700; color: var(--text); }
+  .note { font-size: 13px; margin-top: 3px; }
+  .allergens { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 5px; }
+  .disclaimer { font-size: 12px; color: var(--muted); margin-top: 18px; }
   @media (max-width: 760px) {
     .layout { grid-template-columns: 1fr; }
     aside { border-right: 0; border-bottom: 1px solid var(--line); max-height: 40vh; }
@@ -61,6 +66,8 @@ const MEAL_ORDER = ["breakfast", "lunch", "snack"];
 const COURSE = { staple: "Món chính", main: "Món mặn", soup: "Canh", stir_fry: "Xào", side: "Món phụ",
                  dessert: "Tráng miệng", drink: "Đồ uống", other: "" };
 const WEEKDAY = ["CN", "Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy"];
+const ALLERGEN = { crustacean: "Tôm, cua", mollusc: "Mực, sò", fish: "Cá", egg: "Trứng", milk: "Sữa",
+                   peanut: "Đậu phộng", soy: "Đậu nành", gluten: "Lúa mì", sesame: "Mè", tree_nut: "Hạt" };
 
 let schools = [], current = null, monday = startOfWeek(new Date());
 
@@ -106,7 +113,7 @@ async function renderWeek() {
   document.getElementById("next").onclick = () => { monday = addDays(monday, 7); renderWeek(); };
   document.getElementById("now").onclick = () => { monday = startOfWeek(new Date()); renderWeek(); };
 
-  const meals = await api(`meals?select=date,meal_type,dishes,courses,tray_image_urls,source_post_id` +
+  const meals = await api(`meals?select=date,meal_type,dishes,courses,tray_image_urls,source_post_id,nutrition,ai_note,allergens` +
     `&school_id=eq.${current.id}&date=gte.${iso(monday)}&date=lte.${iso(friday)}`);
   // Source links need migration 0004; the page still works without them.
   const postIds = [...new Set(meals.map(m => m.source_post_id).filter(Boolean))];
@@ -127,6 +134,11 @@ async function renderWeek() {
       <div class="meal">
         <div class="meal-title">${MEAL[m.meal_type] || m.meal_type}</div>
         ${m.dishes.map((name, j) => `<div class="dish"><span class="course">${COURSE[m.courses[j]] ?? ""}</span><span>${esc(name)}</span></div>`).join("")}
+        ${m.nutrition?.kcal ? `<div class="nutri"><span class="kcal">~${Math.round(m.nutrition.kcal)} kcal</span>
+          <span>Đạm ${Math.round(m.nutrition.protein_g)}g</span><span>Béo ${Math.round(m.nutrition.fat_g)}g</span>
+          <span>Bột đường ${Math.round(m.nutrition.carbs_g)}g</span></div>` : ""}
+        ${m.ai_note ? `<div class="note">${esc(m.ai_note)}</div>` : ""}
+        ${m.allergens?.length ? `<div class="allergens">${m.allergens.map(a => `<span class="badge warn">${ALLERGEN[a] || a}</span>`).join("")}</div>` : ""}
         ${m.tray_image_urls?.length ? `<div class="trays">${m.tray_image_urls.map(u =>
           `<a href="${esc(u)}" target="_blank" rel="noopener"><img src="${esc(u)}" alt="Ảnh khay ăn" loading="lazy"></a>`).join("")}</div>` : ""}
       </div>`).join("") : `<div class="nodata">Trường chưa đăng thực đơn ngày này</div>`;
@@ -137,6 +149,8 @@ async function renderWeek() {
     </section>`;
   });
   main.querySelector(".days").innerHTML = days.join("");
+  main.insertAdjacentHTML("beforeend", `<p class="disclaimer">Dinh dưỡng là ước tính bằng AI cho một suất ăn thông thường theo độ tuổi.
+    Nhãn dị ứng được dò theo tên món và nguyên liệu thường dùng, có thể thiếu hoặc thừa. Hãy xác nhận với nhà trường.</p>`);
 }
 
 document.getElementById("schools").onclick = e => {

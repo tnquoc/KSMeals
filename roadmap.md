@@ -4,7 +4,7 @@
 
 **Mục tiêu v1:** app iOS + Android cho phụ huynh TP.HCM xem thực đơn bán trú của trường con, có dinh dưỡng ước tính bằng AI và một chatbot nhỏ. Mục đích là trả lời một câu hỏi: **phụ huynh có mở app đều đặn không?**
 
-**Đang ở:** ✅ Phase 2 xong (trang xem trước + trang duyệt). 👉 Tiếp: dinh dưỡng + nhận xét AI (1.5), rồi Phase 3 app Expo.
+**Đang ở:** ✅ Phase 1 + 2 xong (pipeline tự chạy mỗi sáng, có dinh dưỡng và dị ứng; trang xem trước + duyệt). 👉 Tiếp: Phase 3, app Expo.
 
 ---
 
@@ -13,9 +13,9 @@
 | Phase | Nội dung | Thời gian ước tính | Trạng thái |
 |---|---|---|---|
 | 0 | Khảo sát nguồn dữ liệu | 1 ngày | ✅ Xong |
-| 1 | Pipeline: crawl → OCR → tách ngày → database | 1,5–2 tuần | 👉 Đang làm |
+| 1 | Pipeline: crawl → OCR → tách ngày → database | 1,5–2 tuần | ✅ Xong (19 trường; mở rộng khi sẵn sàng) |
 | 2 | Trang web xem và duyệt dữ liệu | 2–3 ngày | ✅ Xong |
-| 3 | App Expo: chọn trường, thực đơn, dinh dưỡng, push | 2 tuần | ⏳ |
+| 3 | App Expo: chọn trường, thực đơn, dinh dưỡng, push | 2 tuần | 👉 Tiếp theo |
 | 4 | Chatbot | 1 tuần | ⏳ |
 | 5 | Hoàn thiện và nộp store | 1 tuần (+ ~2 tuần Google closed testing) | ⏳ |
 | 6 | Ra mắt và đo lường | 4–6 tuần sau ra mắt | ⏳ |
@@ -68,7 +68,9 @@ sitemap.xml ─► raw_posts ─► tải ảnh gốc ─► OCR (Gemini) ─►
   - ⚠️ Gói miễn phí: `gemini-3.5-flash` chỉ 20 request/ngày → dùng bản `flash-lite` (đọc đúng 28/28 món trên ảnh chuẩn, nhanh gấp 3). Chạy thật 375 trường cần bật billing hoặc hạn mức cao hơn.
   - Lỗi đã biết: gộp thực đơn **nhà trẻ / mẫu giáo** vào cùng một bữa; đôi khi tách sai món có dấu phẩy ("Trứng chiên, thịt xay"); ảnh "Khẩu phần ăn" bị coi là không phải thực đơn thay vì ảnh khay.
 - [x] **1.4 Tách tuần → ngày** (`pipeline/dates.py`, `pipeline/split.py`): dùng khoảng ngày trong tiêu đề/slug làm mốc chính, đối chiếu với ngày OCR đọc được. Lệch ngày, sai thứ, ngày quá xa ngày đăng → `needs_review`.
-- [ ] **1.5 Dinh dưỡng + nhận xét**: LLM ước tính năng lượng, đạm, béo, bột đường cho mỗi bữa, kèm 1 câu nhận xét. Hiển thị rõ là "ước tính".
+- [x] **1.5 Dinh dưỡng + nhận xét** (`pipeline/nutrition.py`): 1 lần gọi AI (chỉ gửi chữ) cho mỗi trường mỗi tuần → kcal, đạm, béo, bột đường theo độ tuổi, nguyên liệu chính, 1 câu nhận xét trung lập về nhóm chất. 418/418 bữa đã có. Trung vị bữa trưa: mầm non ~490 kcal, tiểu học ~590, THCS ~660.
+  - Dị ứng do **code** dò từ khóa (`pipeline/allergens.py`) trên tên món + nguyên liệu, không để AI kết luận. 10 nhóm: tôm cua, mực sò, cá, trứng, sữa, đậu phộng, đậu nành, lúa mì, mè, hạt.
+  - Chạy trong `daily.yml` sau bước OCR.
 - [x] **1.6 Supabase** (project `KSMeals`, Singapore): schema `0001_init.sql` + `0002_meal_courses_trays.sql`, RLS + phân quyền rõ ràng (app chỉ đọc `schools`/`meals` đã publish). `pipeline/sync.py` đã đẩy: 1.293 trường (19 active), 97 bài, 406 bữa ăn. Chạy lại an toàn (upsert). ⏳ Còn kiểm tra quyền bằng publishable key.
 - [x] **1.7 GitHub Actions**: `daily.yml` chạy **5h sáng mỗi ngày** (crawl + OCR, hiện chỉ các trường đã active; chạy tay chọn được `all-regular-and-active`). Trạng thái nằm hết trên Supabase nên runner trống vẫn chạy tiếp được. Đã kiểm chứng: GitHub vào được site trường; lần chạy đầu lấy 14 bài mới, có thực đơn tuần sau.
 
@@ -96,7 +98,7 @@ Chạy: `uv run python -m pipeline.devserver` → http://127.0.0.1:8765
 - [x] Trang xem trước (`web/index.html`): chọn trường → thực đơn theo tuần, món nhóm theo loại (món mặn, canh, xào...), ảnh khay, link bài gốc. Dùng publishable key → thấy đúng những gì app thấy.
 - [x] Trang duyệt (`web/review.html`): bài `needs_review`/`failed` cạnh ảnh/tài liệu gốc; Duyệt, Loại, OCR lại, sửa JSON → xem trước → lưu. Secret key chỉ ở server local.
 - [x] Từ dữ liệu thật: bỏ báo động giả khi ngày đã có trong tiêu đề (4/5 bài cần duyệt là do Gemini đếm sai thứ). Bài còn lại (THCS Lê Quý Đôn) là lỗi thật của trường: tiêu đề 14–18/9 nhưng cột ghi 8–12/9.
-- [ ] Chạy migration `0004_public_post_links.sql` để hiện link "Xem bài gốc" với publishable key.
+- [x] Migration `0004_public_post_links.sql`: key công khai đọc được link bài gốc, các cột riêng tư vẫn bị chặn.
 - Quan sát cho thiết kế app: mầm non có 3 bữa (sáng/trưa/xế), tiểu học/THCS chủ yếu trưa + xế; nhiều trường đăng ảnh khay theo ngày; một số tài liệu có tên **đơn vị cung cấp suất ăn** (dùng cho hồ sơ nhà cung cấp ở v2).
 
 ---

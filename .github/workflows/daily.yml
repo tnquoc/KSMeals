@@ -47,3 +47,6 @@ jobs:
 
       - name: Read menus with Gemini
         run: uv run python -m pipeline.process
+
+      - name: Nutrition estimates and allergens
+        run: uv run python -m pipeline.nutrition
