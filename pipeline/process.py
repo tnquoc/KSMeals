@@ -105,6 +105,10 @@ async def run(limit: int | None, retry_review: bool):
             images, text, file_error = await fetch_contents(f, post)
             if not images and not text:
                 post["status"], post["error"] = "failed", file_error or "downloads failed"
+            elif file_error and not file_error.startswith("legacy"):
+                # The menu is usually in the attachment; OCR on the remaining (often decorative)
+                # images would wrongly conclude "not a menu".
+                post["status"], post["error"] = "failed", file_error
             else:
                 try:
                     ocr = await asyncio.to_thread(call_with_backoff, lambda: extract_menu(

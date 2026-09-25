@@ -4,7 +4,7 @@
 
 **Mục tiêu v1:** app iOS + Android cho phụ huynh TP.HCM xem thực đơn bán trú của trường con, có dinh dưỡng ước tính bằng AI và một chatbot nhỏ. Mục đích là trả lời một câu hỏi: **phụ huynh có mở app đều đặn không?**
 
-**Đang ở:** 👉 Phase 1: pipeline chạy đầu-cuối trên 20 trường thử nghiệm và đã đẩy lên Supabase. Còn: dinh dưỡng (1.5), chạy tự động bằng GitHub Actions (1.7), mở rộng ra 375 trường.
+**Đang ở:** 👉 Phase 1 gần xong: pipeline tự chạy mỗi sáng trên GitHub Actions cho 19 trường. Còn: dinh dưỡng + nhận xét AI (1.5), mở rộng lên 375 trường (khi sẵn sàng về hạn mức Gemini).
 
 ---
 
@@ -70,7 +70,7 @@ sitemap.xml ─► raw_posts ─► tải ảnh gốc ─► OCR (Gemini) ─►
 - [x] **1.4 Tách tuần → ngày** (`pipeline/dates.py`, `pipeline/split.py`): dùng khoảng ngày trong tiêu đề/slug làm mốc chính, đối chiếu với ngày OCR đọc được. Lệch ngày, sai thứ, ngày quá xa ngày đăng → `needs_review`.
 - [ ] **1.5 Dinh dưỡng + nhận xét**: LLM ước tính năng lượng, đạm, béo, bột đường cho mỗi bữa, kèm 1 câu nhận xét. Hiển thị rõ là "ước tính".
 - [x] **1.6 Supabase** (project `KSMeals`, Singapore): schema `0001_init.sql` + `0002_meal_courses_trays.sql`, RLS + phân quyền rõ ràng (app chỉ đọc `schools`/`meals` đã publish). `pipeline/sync.py` đã đẩy: 1.293 trường (19 active), 97 bài, 406 bữa ăn. Chạy lại an toàn (upsert). ⏳ Còn kiểm tra quyền bằng publishable key.
-- [ ] **1.7 GitHub Actions**: chạy pipeline tự động (cron theo giờ UTC: 6h sáng VN = `0 23 * * *`).
+- [x] **1.7 GitHub Actions**: `daily.yml` chạy **5h sáng mỗi ngày** (crawl + OCR, hiện chỉ các trường đã active; chạy tay chọn được `all-regular-and-active`). Trạng thái nằm hết trên Supabase nên runner trống vẫn chạy tiếp được. Đã kiểm chứng: GitHub vào được site trường; lần chạy đầu lấy 14 bài mới, có thực đơn tuần sau.
 
 **Xong khi:** ≥80% bài của các trường "regular" được bóc thành thực đơn theo ngày mà không cần sửa tay.
 

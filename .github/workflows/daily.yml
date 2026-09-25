@@ -4,9 +4,8 @@
 name: Daily pipeline
 
 on:
-  # Enable once the connectivity check passes and migration 0003 is applied:
-  # schedule:
-  #   - cron: "0 22 * * *"  # 05:00 Vietnam time (UTC+7)
+  schedule:
+    - cron: "0 22 * * *"  # 05:00 Vietnam time (UTC+7); GitHub may start it a little late
   workflow_dispatch:
     inputs:
       scope:
@@ -29,9 +28,9 @@ jobs:
       SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
       PYTHONUNBUFFERED: "1"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
           cache: pip
