@@ -22,9 +22,15 @@ jobs:
 
       - name: School websites
         run: |
+          failed=0
           for url in https://thlevansi.hcm.edu.vn/sitemap.xml https://phuongtansonhoa.hcm.edu.vn/ https://fileth.hcm.shieldix.app/; do
-            curl -s -o /dev/null -m 60 -A "KSMealsBot/0.1" -w "%{http_code} %{time_total}s  $url\n" "$url" || echo "FAILED  $url"
+            code=$(curl -s -o /dev/null -m 60 -A "KSMealsBot/0.1" -w "%{http_code}" "$url" || true)
+            echo "| \`$url\` | $code |" >> results.md
+            echo "$code  $url"
+            [ "$code" = "000" ] && failed=1
           done
+          { echo "### School websites"; echo "| URL | HTTP |"; echo "|---|---|"; cat results.md; } >> "$GITHUB_STEP_SUMMARY"
+          exit $failed
 
       - name: Gemini and Supabase
         env:
@@ -35,13 +41,19 @@ jobs:
           python - <<'EOF'
           from openai import OpenAI
           from pipeline import config
-          from pipeline.sync import Supabase
+          from pipeline.store import Store
 
           print("gemini key set:", bool(config.LLM_API_KEY))
           models = OpenAI(api_key=config.LLM_API_KEY, base_url=config.LLM_BASE_URL).models.list()
           print("gemini ok:", any(config.LLM_MODEL in m.id for m in models))
 
-          db = Supabase(config.SUPABASE_URL, config.SUPABASE_SECRET_KEY)
+          db = Store()
           r = db.http.get("/schools", params={"select": "id", "limit": "1"}, headers={"Prefer": "count=exact"})
           print("supabase:", r.status_code, r.headers.get("content-range"))
+
+          import os
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as fh:
+              fh.write(f"### Services\n- Gemini `{config.LLM_MODEL}` reachable: {any(config.LLM_MODEL in m.id for m in models)}\n"
+                       f"- Supabase schools: {r.status_code} {r.headers.get('content-range')}\n")
+          assert r.status_code < 300, "Supabase request failed"
           EOF

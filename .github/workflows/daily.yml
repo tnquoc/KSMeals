@@ -1,0 +1,51 @@
+# Daily pipeline: find new menu posts, read them with Gemini, write meals to Supabase.
+# All state lives in Supabase, so each run starts from an empty runner and picks up
+# where the previous one stopped (e.g. when the free Gemini quota ran out).
+name: Daily pipeline
+
+on:
+  # Enable once the connectivity check passes and migration 0003 is applied:
+  # schedule:
+  #   - cron: "0 22 * * *"  # 05:00 Vietnam time (UTC+7)
+  workflow_dispatch:
+    inputs:
+      scope:
+        description: "Which schools to crawl"
+        type: choice
+        options: [active-only, all-regular-and-active]
+        default: active-only
+
+concurrency:
+  group: daily-pipeline
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+      PYTHONUNBUFFERED: "1"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: pipeline/requirements.txt
+
+      - run: pip install -r pipeline/requirements.txt
+
+      - name: Crawl new menu posts
+        run: |
+          if [ "${{ inputs.scope }}" = "all-regular-and-active" ]; then
+            python -m pipeline.crawl --since-days 10
+          else
+            python -m pipeline.crawl --since-days 10 --active-only
+          fi
+
+      - name: Read menus with Gemini
+        run: python -m pipeline.process
