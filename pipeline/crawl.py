@@ -6,7 +6,7 @@ page images; .docx/.xlsx are converted to text. Legacy .doc/.xls are skipped for
 Only records new posts (status pending) in Supabase; downloading and OCR happen in
 process.py, so a run that stops early can resume anywhere from the database alone.
 
-Usage: uv run python -m pipeline.crawl [--schools code1 code2 ... | --active-only | --status regular active]
+Usage: uv run python -m pipeline.crawl [--schools code1 code2 ... | --tracked | --active-only | --status regular active]
                                        [--since-days 14]
 """
 import argparse
@@ -181,6 +181,14 @@ async def crawl_school(f: Fetcher, code: str, since: date, known: set) -> list[d
     return posts
 
 
+TRACKED_FILE = config.DATA_DIR / "tracked_schools.txt"
+
+
+def tracked_codes() -> list[str]:
+    lines = TRACKED_FILE.read_text(encoding="utf-8").splitlines()
+    return [line.strip() for line in lines if line.strip() and not line.startswith("#")]
+
+
 def pick_schools(status: list[str]) -> list[str]:
     with open(config.DATA_DIR / "coverage.csv", encoding="utf-8") as fh:
         return [r["code"] for r in csv.DictReader(fh) if r["status"] in status]
@@ -207,10 +215,18 @@ def main():
     ap.add_argument("--schools", nargs="*", help="school codes (default: from coverage.csv)")
     ap.add_argument("--status", nargs="*", default=["regular", "active"])
     ap.add_argument("--active-only", action="store_true", help="only schools already shown in the app")
+    ap.add_argument("--tracked", action="store_true", help=f"schools listed in {TRACKED_FILE.name}")
     ap.add_argument("--since-days", type=int, default=14)
     args = ap.parse_args()
 
-    codes = args.schools or (Store().active_codes() if args.active_only else pick_schools(args.status))
+    if args.schools:
+        codes = args.schools
+    elif args.tracked:
+        codes = tracked_codes()
+    elif args.active_only:
+        codes = Store().active_codes()
+    else:
+        codes = pick_schools(args.status)
     since = date.today() - timedelta(days=args.since_days)
     print(f"crawling {len(codes)} schools, menu posts since {since}")
     posts = asyncio.run(run(codes, since))

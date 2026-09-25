@@ -11,8 +11,8 @@ on:
       scope:
         description: "Which schools to crawl"
         type: choice
-        options: [active-only, all-regular-and-active]
-        default: active-only
+        options: [tracked, active-only, all-regular-and-active]
+        default: tracked
 
 concurrency:
   group: daily-pipeline
@@ -39,11 +39,12 @@ jobs:
 
       - name: Crawl new menu posts
         run: |
-          if [ "${{ inputs.scope }}" = "all-regular-and-active" ]; then
-            uv run python -m pipeline.crawl --since-days 10
-          else
-            uv run python -m pipeline.crawl --since-days 10 --active-only
-          fi
+          # Scheduled runs have no inputs: default to the tracked list.
+          case "${{ inputs.scope }}" in
+            all-regular-and-active) uv run python -m pipeline.crawl --since-days 10 ;;
+            active-only) uv run python -m pipeline.crawl --since-days 10 --active-only ;;
+            *) uv run python -m pipeline.crawl --since-days 10 --tracked ;;
+          esac
 
       - name: Read menus with Gemini
         run: uv run python -m pipeline.process
