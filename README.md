@@ -6,6 +6,7 @@ App giúp phụ huynh TP.HCM theo dõi thực đơn bán trú của con, dữ li
 
 ```
 pipeline/             Python data pipeline (see below)
+web/                  local viewer (/) and review tool (/review), served by pipeline.devserver
 data/                 schools.csv, coverage.csv (from discover/survey)
 supabase/migrations/  database schema, run in order in the Supabase SQL Editor
 .github/workflows/    daily.yml (05:00 VN), connectivity.yml (manual check)
@@ -53,3 +54,14 @@ one stopped, e.g. after the free Gemini quota runs out.
 
 Crawling rules: respect robots.txt (`/Timkiem` is disallowed, so no site search), max 2–4
 concurrent requests, retries with backoff.
+
+## Viewer and review tool
+
+```bash
+uv run python -m pipeline.devserver
+```
+
+- http://127.0.0.1:8765/ : what the app will show, using the publishable key (read-only, published data only)
+- http://127.0.0.1:8765/review : posts flagged `needs_review` or `failed`, next to the original image or
+  document. Approve, reject, queue for re-OCR, or edit the OCR JSON and re-split. Runs only on
+  127.0.0.1; the secret key stays in the server process.

@@ -5,7 +5,7 @@ needs_review instead of the app. Showing nothing beats showing the wrong food.
 """
 from datetime import date, timedelta
 
-from pipeline.dates import parse_slug_range, parse_title_range, week_of
+from pipeline.dates import dates_in_text, parse_slug_range, parse_title_range, week_of
 
 MAX_DAYS_BEFORE_POST = 21   # menus are posted ahead of time, rarely long after
 MAX_DAYS_AFTER_POST = 45    # some schools post a whole month at once
@@ -41,6 +41,10 @@ def build_meals(ocr: dict, title: str, slug: str, published_at: date) -> tuple[l
     if fallback_monday:
         fallback_monday = week_of(fallback_monday)[0]
 
+    # A date also written in the title is confirmed; then a wrong weekday is the model's
+    # mistake (it sometimes counts Monday as 1), not a misread date.
+    title_dates = dates_in_text(title, published_at)
+
     rows, seen = [], set()
     for day in days:
         weekday = day.get("weekday")
@@ -50,7 +54,7 @@ def build_meals(ocr: dict, title: str, slug: str, published_at: date) -> tuple[l
         if d is None:
             issues.append(f"no date for weekday {weekday}")
             continue
-        if isinstance(weekday, int) and d.isoweekday() + 1 != weekday:
+        if isinstance(weekday, int) and d.isoweekday() + 1 != weekday and d not in title_dates:
             issues.append(f"{d} is not weekday {weekday} (misread date?)")
         if not (-MAX_DAYS_BEFORE_POST <= (d - published_at).days <= MAX_DAYS_AFTER_POST):
             issues.append(f"{d} too far from post date {published_at}")

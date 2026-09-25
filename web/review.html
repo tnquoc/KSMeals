@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KSMeals · Duyệt</title>
+<link rel="stylesheet" href="/style.css">
+<style>
+  main { padding: 20px; max-width: 1400px; margin: 0 auto; }
+  .filters { display: flex; gap: 8px; align-items: center; margin-bottom: 16px; flex-wrap: wrap; }
+  .item { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); margin-bottom: 18px; overflow: hidden; }
+  .item-head { padding: 12px 16px; border-bottom: 1px solid var(--line); display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+  .item-head .title { font-weight: 600; }
+  .issues { padding: 8px 16px; background: var(--warn-soft); color: var(--warn); font-size: 13px; }
+  .issues.bad { background: var(--bad-soft); color: var(--bad); }
+  .cols { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); }
+  .source { padding: 12px; border-right: 1px solid var(--line); max-height: 720px; overflow: auto; }
+  .source img { width: 100%; border-radius: 8px; border: 1px solid var(--line); margin-bottom: 8px; }
+  .result { padding: 12px 16px; max-height: 720px; overflow: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  td, th { border-bottom: 1px solid var(--line); padding: 5px 6px; text-align: left; vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; }
+  textarea { width: 100%; min-height: 260px; font-family: ui-monospace, Consolas, monospace; font-size: 12px; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; padding: 12px 16px; border-top: 1px solid var(--line); }
+  .msg { font-size: 13px; margin-left: auto; align-self: center; }
+  details summary { cursor: pointer; margin: 10px 0 6px; color: var(--muted); }
+  @media (max-width: 900px) { .cols { grid-template-columns: 1fr; } .source { border-right: 0; border-bottom: 1px solid var(--line); } }
+</style>
+</head>
+<body>
+<header class="top">
+  <h1>KSMeals</h1><span class="tag">Duyệt bài · chỉ chạy trên máy bạn (secret key phía server)</span>
+  <nav><a href="/">Xem trước</a><a href="/review">Duyệt</a></nav>
+</header>
+<main>
+  <div class="filters">
+    <label><input type="radio" name="f" value="needs_review" checked> Cần duyệt</label>
+    <label><input type="radio" name="f" value="failed"> Lỗi</label>
+    <label><input type="radio" name="f" value=""> Tất cả</label>
+    <span id="count" class="muted"></span>
+  </div>
+  <div id="list"><div class="empty">Đang tải…</div></div>
+</main>
+<script>
+const MEAL = { breakfast: "Sáng", lunch: "Trưa", snack: "Xế" };
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+let items = [];
+
+async function post(id, name, body = {}) {
+  const r = await fetch(`/api/review/${id}/${name}`, { method: "POST", body: JSON.stringify(body) });
+  const data = await r.json();
+  if (!r.ok) throw new Error(data.error);
+  return data;
+}
+
+function mealsTable(meals) {
+  if (!meals?.length) return `<div class="muted">Không có bữa ăn nào được tách ra.</div>`;
+  return `<table><tr><th>Ngày</th><th>Bữa</th><th>Món</th></tr>${meals.map(m => `
+    <tr><td>${esc(m.date)}</td><td>${MEAL[m.meal_type] || esc(m.meal_type)}</td>
+    <td>${m.dishes.map(esc).join(" · ")}</td></tr>`).join("")}</table>`;
+}
+
+function render() {
+  const f = document.querySelector("input[name=f]:checked").value;
+  const list = items.filter(p => !f || p.status === f);
+  document.getElementById("count").textContent = `${list.length} bài`;
+  document.getElementById("list").innerHTML = list.map(p => `
+    <article class="item" id="p${p.id}">
+      <div class="item-head">
+        <span class="badge ${p.status === "failed" ? "bad" : "warn"}">${p.status}</span>
+        <span class="title">${esc(p.title)}</span>
+        <span class="muted">${esc(p.school.name)} · đăng ${esc(p.published_at)}</span>
+        <a href="${esc(p.url)}" target="_blank" rel="noopener">Bài gốc ↗</a>
+      </div>
+      ${p.error ? `<div class="issues ${p.status === "failed" ? "bad" : ""}">${esc(p.error).replaceAll("; ", "<br>")}</div>` : ""}
+      <div class="cols">
+        <div class="source">
+          ${p.image_urls.map(u => `<a href="${esc(u)}" target="_blank" rel="noopener"><img src="${esc(u)}" loading="lazy" alt="Ảnh gốc"></a>`).join("")}
+          ${(p.doc_urls || []).map(u => `<div><a href="${esc(u)}" target="_blank" rel="noopener">📄 ${esc(u.split("/").pop())}</a></div>`).join("")}
+          ${!p.image_urls.length && !(p.doc_urls || []).length ? `<div class="muted">Không có ảnh hay tài liệu.</div>` : ""}
+        </div>
+        <div class="result">
+          <div class="preview">${mealsTable(p.meals)}</div>
+          ${p.ocr ? `<details><summary>Sửa JSON OCR</summary>
+            <textarea spellcheck="false">${esc(JSON.stringify(p.ocr, null, 2))}</textarea></details>` : ""}
+        </div>
+      </div>
+      <div class="actions">
+        ${p.meals.length ? `<button class="primary" data-act="approve">Duyệt (publish)</button>` : ""}
+        ${p.ocr ? `<button data-act="preview">Xem trước JSON đã sửa</button><button data-act="save">Lưu JSON</button>` : ""}
+        <button data-act="retry">OCR lại lần chạy sau</button>
+        <button class="danger" data-act="reject">Loại (không phải thực đơn)</button>
+        <span class="msg"></span>
+      </div>
+    </article>`).join("") || `<div class="empty">Không còn bài nào 🎉</div>`;
+}
+
+document.getElementById("list").onclick = async e => {
+  const btn = e.target.closest("button[data-act]");
+  if (!btn) return;
+  const card = btn.closest(".item"), id = +card.id.slice(1), act = btn.dataset.act;
+  const msg = card.querySelector(".msg");
+  const edited = () => JSON.parse(card.querySelector("textarea").value);
+  msg.textContent = "…";
+  try {
+    if (act === "preview" || act === "save") {
+      const res = await post(id, "resplit", { ocr: edited(), save: act === "save", force: act === "save" && res_force(card) });
+      card.querySelector(".preview").innerHTML =
+        (res.issues ? `<div class="issues">${esc(res.issues).replaceAll("; ", "<br>")}</div>` : "") + mealsTable(res.meals);
+      msg.textContent = act === "save" ? `Đã lưu (${res.status})` : `Xem trước: ${res.status}`;
+      if (act === "save") setTimeout(load, 800);
+    } else {
+      if (act === "reject" && !confirm("Loại bài này và xoá các bữa ăn tách từ nó?")) { msg.textContent = ""; return; }
+      await post(id, act);
+      msg.textContent = "Xong";
+      setTimeout(load, 500);
+    }
+  } catch (err) {
+    msg.textContent = `Lỗi: ${err.message}`;
+  }
+};
+// Saving edited JSON that still has issues asks whether to publish anyway.
+function res_force(card) {
+  return card.querySelector(".issues") ? confirm("Vẫn còn cảnh báo. Publish luôn?") : false;
+}
+document.querySelectorAll("input[name=f]").forEach(r => r.onchange = render);
+
+async function load() {
+  try {
+    items = await (await fetch("/api/review")).json();
+    render();
+  } catch (err) {
+    document.getElementById("list").innerHTML = `<div class="empty">Lỗi: ${esc(err.message)}</div>`;
+  }
+}
+load();
+</script>
+</body>
+</html>

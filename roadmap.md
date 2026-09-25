@@ -4,7 +4,7 @@
 
 **Mục tiêu v1:** app iOS + Android cho phụ huynh TP.HCM xem thực đơn bán trú của trường con, có dinh dưỡng ước tính bằng AI và một chatbot nhỏ. Mục đích là trả lời một câu hỏi: **phụ huynh có mở app đều đặn không?**
 
-**Đang ở:** 👉 Phase 1 gần xong: pipeline tự chạy mỗi sáng trên GitHub Actions cho 19 trường. Còn: dinh dưỡng + nhận xét AI (1.5), mở rộng lên 375 trường (khi sẵn sàng về hạn mức Gemini).
+**Đang ở:** ✅ Phase 2 xong (trang xem trước + trang duyệt). 👉 Tiếp: dinh dưỡng + nhận xét AI (1.5), rồi Phase 3 app Expo.
 
 ---
 
@@ -14,7 +14,7 @@
 |---|---|---|---|
 | 0 | Khảo sát nguồn dữ liệu | 1 ngày | ✅ Xong |
 | 1 | Pipeline: crawl → OCR → tách ngày → database | 1,5–2 tuần | 👉 Đang làm |
-| 2 | Trang web xem và duyệt dữ liệu | 2–3 ngày | ⏳ |
+| 2 | Trang web xem và duyệt dữ liệu | 2–3 ngày | ✅ Xong |
 | 3 | App Expo: chọn trường, thực đơn, dinh dưỡng, push | 2 tuần | ⏳ |
 | 4 | Chatbot | 1 tuần | ⏳ |
 | 5 | Hoàn thiện và nộp store | 1 tuần (+ ~2 tuần Google closed testing) | ⏳ |
@@ -89,11 +89,15 @@ chat_usage(device_id, date, count)
 
 ---
 
-## Phase 2: Trang web xem và duyệt dữ liệu
+## Phase 2: Trang web xem và duyệt dữ liệu ✅
 
-- [ ] Trang web thô đọc từ Supabase: danh sách trường → thực đơn theo ngày
-- [ ] Trang duyệt `needs_review`: ảnh gốc cạnh JSON, sửa tay nhanh
-- [ ] Xem dữ liệu thật của khoảng 50 trường **trước khi** thiết kế màn hình app (gộp món, bữa xế, thực đơn chay...)
+Chạy: `uv run python -m pipeline.devserver` → http://127.0.0.1:8765
+
+- [x] Trang xem trước (`web/index.html`): chọn trường → thực đơn theo tuần, món nhóm theo loại (món mặn, canh, xào...), ảnh khay, link bài gốc. Dùng publishable key → thấy đúng những gì app thấy.
+- [x] Trang duyệt (`web/review.html`): bài `needs_review`/`failed` cạnh ảnh/tài liệu gốc; Duyệt, Loại, OCR lại, sửa JSON → xem trước → lưu. Secret key chỉ ở server local.
+- [x] Từ dữ liệu thật: bỏ báo động giả khi ngày đã có trong tiêu đề (4/5 bài cần duyệt là do Gemini đếm sai thứ). Bài còn lại (THCS Lê Quý Đôn) là lỗi thật của trường: tiêu đề 14–18/9 nhưng cột ghi 8–12/9.
+- [ ] Chạy migration `0004_public_post_links.sql` để hiện link "Xem bài gốc" với publishable key.
+- Quan sát cho thiết kế app: mầm non có 3 bữa (sáng/trưa/xế), tiểu học/THCS chủ yếu trưa + xế; nhiều trường đăng ảnh khay theo ngày; một số tài liệu có tên **đơn vị cung cấp suất ăn** (dùng cho hồ sơ nhà cung cấp ở v2).
 
 ---
 

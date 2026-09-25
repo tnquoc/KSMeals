@@ -81,6 +81,17 @@ def parse_slug_range(slug: str, anchor: date) -> tuple[date, date] | None:
     return parse_title_range(re.sub(r"-den(?:-ngay)?-", " đến ", slug or ""), anchor)
 
 
+def dates_in_text(text: str, anchor: date) -> set[date]:
+    """Every dd/mm(/yyyy) in a title, e.g. {2026-09-25} for 'Bữa ăn ngày 25/09/2026'."""
+    out = set()
+    for m in re.finditer(DATE_RE, text or ""):
+        d, mo, y = m.groups()
+        got = _make(int(d), int(mo), int(y) if y else None, anchor)
+        if got and abs((got - anchor).days) <= 60:
+            out.add(got)
+    return out
+
+
 def week_of(d: date) -> tuple[date, date]:
     """Monday..Friday of the week containing d."""
     monday = d - timedelta(days=d.weekday())

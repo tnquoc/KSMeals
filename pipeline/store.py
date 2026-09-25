@@ -57,6 +57,10 @@ class Store:
         resp = self.http.patch(f"/{table}", params=params, content=json.dumps(values, ensure_ascii=False, default=str))
         self._check(table, resp)
 
+    def delete(self, table: str, match: dict):
+        params = {k: f"eq.{v}" for k, v in match.items()}
+        self._check(table, self.http.delete(f"/{table}", params=params))
+
     @staticmethod
     def _check(table: str, resp: httpx.Response):
         if resp.status_code >= 300:

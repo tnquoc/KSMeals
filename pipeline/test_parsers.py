@@ -129,6 +129,17 @@ def test_build_meals_fills_missing_dates_from_title():
     assert sorted({r["date"] for r in rows}) == [date(2026, 9, 21) + timedelta(days=i) for i in range(5)]
 
 
+def test_build_meals_trusts_date_confirmed_by_title():
+    # Daily post; the model wrote weekday 5 for Friday 25/9 (Friday is 6), the date is right.
+    ocr = {"kind": "weekly_menu", "days": [{"date": "2026-09-25", "weekday": 5, "meals": [
+        {"meal_type": "lunch", "dishes": [{"name": "La gu + bánh mì", "course": "staple"}]}]}]}
+    rows, issues = build_meals(ocr, "Hình ảnh bữa ăn bán trú ngày 25/09/2026", "", date(2026, 9, 25))
+    assert issues == [] and rows[0]["date"] == date(2026, 9, 25)
+    # Without the title confirming the date, the mismatch is still flagged.
+    _, issues = build_meals(ocr, "Bữa ăn bán trú", "", date(2026, 9, 25))
+    assert any("not weekday" in i for i in issues)
+
+
 def test_build_meals_rejects_non_menu():
     rows, issues = build_meals({"kind": "tray_photo", "days": []}, "", "", date(2026, 9, 18))
     assert rows == [] and issues

@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KSMeals · Xem trước</title>
+<link rel="stylesheet" href="/style.css">
+<style>
+  .layout { display: grid; grid-template-columns: 300px 1fr; min-height: calc(100vh - 53px); }
+  aside { background: var(--panel); border-right: 1px solid var(--line); padding: 14px; overflow-y: auto; }
+  aside input { width: 100%; margin-bottom: 10px; }
+  .school {
+    display: block; width: 100%; text-align: left; border: 0; border-radius: 8px;
+    padding: 8px 10px; margin-bottom: 2px; background: transparent;
+  }
+  .school:hover { background: var(--bg); }
+  .school.on { background: var(--accent-soft); }
+  .school .name { font-weight: 600; }
+  .school .meta { font-size: 12px; color: var(--muted); }
+  main { padding: 20px; min-width: 0; }
+  .weekbar { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+  .weekbar h2 { margin: 0 8px 0 0; font-size: 20px; }
+  .weekbar .range { font-weight: 600; min-width: 170px; text-align: center; }
+  .days { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 14px; }
+  .day { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px; }
+  .day.today { background: var(--today); border-color: var(--warn); }
+  .day h3 { margin: 0 0 10px; font-size: 15px; display: flex; justify-content: space-between; }
+  .meal { margin-bottom: 12px; }
+  .meal-title { font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--muted); letter-spacing: .04em; margin-bottom: 4px; }
+  .dish { display: flex; gap: 6px; align-items: baseline; padding: 2px 0; }
+  .dish .course { font-size: 11px; color: var(--muted); min-width: 74px; }
+  .trays { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+  .trays img { width: 72px; height: 54px; object-fit: cover; border-radius: 6px; border: 1px solid var(--line); }
+  .source { font-size: 12px; margin-top: 8px; display: block; }
+  .nodata { color: var(--muted); font-size: 13px; font-style: italic; }
+  @media (max-width: 760px) {
+    .layout { grid-template-columns: 1fr; }
+    aside { border-right: 0; border-bottom: 1px solid var(--line); max-height: 40vh; }
+    main { padding: 14px; }
+  }
+</style>
+</head>
+<body>
+<header class="top">
+  <h1>KSMeals</h1><span class="tag">Xem trước dữ liệu, đúng như app sẽ thấy (publishable key)</span>
+  <nav><a href="/">Xem trước</a><a href="/review">Duyệt</a></nav>
+</header>
+<div class="layout">
+  <aside>
+    <input id="q" type="search" placeholder="Tìm trường…" autocomplete="off">
+    <div id="schools"><div class="muted">Đang tải…</div></div>
+  </aside>
+  <main id="main"><div class="empty">Chọn một trường bên trái</div></main>
+</div>
+<script src="/config.js"></script>
+<script>
+const { supabaseUrl, publishableKey } = window.KSMEALS;
+const LEVEL = { mn: "Mầm non", th: "Tiểu học", thcs: "THCS" };
+const MEAL = { breakfast: "Bữa sáng", lunch: "Bữa trưa", snack: "Bữa xế" };
+const MEAL_ORDER = ["breakfast", "lunch", "snack"];
+const COURSE = { staple: "Món chính", main: "Món mặn", soup: "Canh", stir_fry: "Xào", side: "Món phụ",
+                 dessert: "Tráng miệng", drink: "Đồ uống", other: "" };
+const WEEKDAY = ["CN", "Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy"];
+
+let schools = [], current = null, monday = startOfWeek(new Date());
+
+async function api(path) {
+  const r = await fetch(`${supabaseUrl}/rest/v1/${path}`, { headers: { apikey: publishableKey } });
+  if (!r.ok) throw new Error(`${r.status} ${await r.text()}`);
+  return r.json();
+}
+function startOfWeek(d) {
+  const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const wd = x.getDay();                      // weekend -> show next week
+  x.setDate(x.getDate() + (wd === 0 ? 1 : wd === 6 ? 2 : 1 - wd));
+  return x;
+}
+const addDays = (d, n) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
+const iso = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+const dm = d => `${d.getDate()}/${d.getMonth() + 1}`;
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+function renderSchools() {
+  const q = document.getElementById("q").value.trim().toLowerCase();
+  const list = schools.filter(s => !q || s.name.toLowerCase().includes(q) || s.code.includes(q));
+  document.getElementById("schools").innerHTML = list.map(s => `
+    <button class="school ${current?.id === s.id ? "on" : ""}" data-id="${s.id}">
+      <div class="name">${esc(s.name)}</div>
+      <div class="meta">${LEVEL[s.level] || s.level} · ${esc(s.ward)}</div>
+    </button>`).join("") || `<div class="muted">Không có trường nào</div>`;
+}
+
+async function renderWeek() {
+  const main = document.getElementById("main");
+  const friday = addDays(monday, 4);
+  main.innerHTML = `
+    <div class="weekbar">
+      <h2>${esc(current.name)}</h2>
+      <button id="prev">‹ Tuần trước</button>
+      <span class="range">${dm(monday)} – ${dm(friday)}/${friday.getFullYear()}</span>
+      <button id="next">Tuần sau ›</button>
+      <button id="now">Tuần này</button>
+    </div>
+    <div class="days"><div class="muted">Đang tải…</div></div>`;
+  document.getElementById("prev").onclick = () => { monday = addDays(monday, -7); renderWeek(); };
+  document.getElementById("next").onclick = () => { monday = addDays(monday, 7); renderWeek(); };
+  document.getElementById("now").onclick = () => { monday = startOfWeek(new Date()); renderWeek(); };
+
+  const meals = await api(`meals?select=date,meal_type,dishes,courses,tray_image_urls,source_post_id` +
+    `&school_id=eq.${current.id}&date=gte.${iso(monday)}&date=lte.${iso(friday)}`);
+  // Source links need migration 0004; the page still works without them.
+  const postIds = [...new Set(meals.map(m => m.source_post_id).filter(Boolean))];
+  let posts = {};
+  if (postIds.length) {
+    try {
+      (await api(`raw_posts?select=id,url,title&id=in.(${postIds.join(",")})`)).forEach(p => posts[p.id] = p);
+    } catch (e) { console.warn("source links unavailable:", e.message); }
+  }
+
+  const today = iso(new Date());
+  const days = [0, 1, 2, 3, 4].map(i => {
+    const d = addDays(monday, i), key = iso(d);
+    const dayMeals = meals.filter(m => m.date === key)
+      .sort((a, b) => MEAL_ORDER.indexOf(a.meal_type) - MEAL_ORDER.indexOf(b.meal_type));
+    const sources = [...new Set(dayMeals.map(m => m.source_post_id))].map(id => posts[id]).filter(Boolean);
+    const body = dayMeals.length ? dayMeals.map(m => `
+      <div class="meal">
+        <div class="meal-title">${MEAL[m.meal_type] || m.meal_type}</div>
+        ${m.dishes.map((name, j) => `<div class="dish"><span class="course">${COURSE[m.courses[j]] ?? ""}</span><span>${esc(name)}</span></div>`).join("")}
+        ${m.tray_image_urls?.length ? `<div class="trays">${m.tray_image_urls.map(u =>
+          `<a href="${esc(u)}" target="_blank" rel="noopener"><img src="${esc(u)}" alt="Ảnh khay ăn" loading="lazy"></a>`).join("")}</div>` : ""}
+      </div>`).join("") : `<div class="nodata">Trường chưa đăng thực đơn ngày này</div>`;
+    return `<section class="day ${key === today ? "today" : ""}">
+      <h3><span>${WEEKDAY[d.getDay()]}</span><span class="muted">${dm(d)}</span></h3>
+      ${body}
+      ${sources.map(p => `<a class="source" href="${esc(p.url)}" target="_blank" rel="noopener">Xem bài gốc ↗</a>`).join("")}
+    </section>`;
+  });
+  main.querySelector(".days").innerHTML = days.join("");
+}
+
+document.getElementById("schools").onclick = e => {
+  const b = e.target.closest(".school");
+  if (!b) return;
+  current = schools.find(s => s.id === +b.dataset.id);
+  renderSchools();
+  renderWeek().catch(err => document.getElementById("main").innerHTML = `<div class="empty">Lỗi: ${esc(err.message)}</div>`);
+};
+document.getElementById("q").oninput = renderSchools;
+
+api("schools?select=id,code,name,level,ward&active=eq.true&order=name")
+  .then(rows => { schools = rows; renderSchools(); })
+  .catch(err => document.getElementById("schools").innerHTML = `<div class="muted">Lỗi: ${esc(err.message)}</div>`);
+</script>
+</body>
+</html>
