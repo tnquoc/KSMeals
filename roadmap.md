@@ -4,7 +4,7 @@
 
 **Mục tiêu v1:** app iOS + Android cho phụ huynh TP.HCM xem thực đơn bán trú của trường con, có dinh dưỡng ước tính bằng AI và một chatbot nhỏ. Mục đích là trả lời một câu hỏi: **phụ huynh có mở app đều đặn không?**
 
-**Đang ở:** 👉 Phase 3: app Expo chạy được (chọn trường, hôm nay, cả tuần, dinh dưỡng, dị ứng). Tiếp: thử trên iPhone, push buổi sáng, "báo tôi khi có".
+**Đang ở:** 👉 Phase 3: app chạy trên iPhone; dữ liệu mở rộng lên **72 trường** trong 7 phường (`data/tracked_schools.txt`). Tiếp: push buổi sáng + "báo tôi khi có" (cần EAS build, tài khoản Apple Developer).
 
 ---
 
@@ -120,6 +120,14 @@ Thư mục `app/`, Expo SDK 57 + Expo Router, TypeScript. Chạy: `cd app && npx
 - [ ] Nút chia sẻ thực đơn hôm nay dạng ảnh
 - [ ] Analytics (PostHog hoặc Firebase)
 - [ ] Icon, splash, tên hiển thị trên store
+
+---
+
+### Mở rộng dữ liệu (26/09/2026)
+
+- 90 trường theo dõi ở 7 phường dày đặc nhất (Phú Thọ Hòa, Bình Phú, An Hội Đông, Hòa Hưng, Hóc Môn, Bình Tây, Đông Hưng Thuận) → **72 trường có dữ liệu trong app**, 69 trường đủ tuần 21–25/9, 20 trường có ảnh khay.
+- 214 bài OCR + 75 lượt dinh dưỡng bằng `gemini-3.5-flash-lite` gói miễn phí trong một ngày, **không chạm hạn mức**.
+- Còn thiếu: 3 trường chỉ đăng `.doc`/`.xls` đời cũ (cần LibreOffice trên GitHub Actions); 2 trường mầm non có 2 bữa xế/thực đơn nhà trẻ–mẫu giáo (lỗi "duplicate snack", cần thêm nhóm tuổi vào schema); vài trường không đăng bài trong 10 ngày qua.
 
 ---
 
