@@ -1,0 +1,200 @@
+{
+ "kind": "weekly_menu",
+ "week_start": "2026-09-21",
+ "week_end": "2026-09-25",
+ "days": [
+  {
+   "date": "2026-09-21",
+   "weekday": 2,
+   "meals": [
+    {
+     "meal_type": "lunch",
+     "dishes": [
+      {
+       "name": "Cơm",
+       "course": "staple"
+      },
+      {
+       "name": "Cá diêu hồng sốt cà chua",
+       "course": "main"
+      },
+      {
+       "name": "Canh cải cúc ngò ngọt nấu thịt gà",
+       "course": "soup"
+      },
+      {
+       "name": "Đậu đũa cà rốt xào tôm",
+       "course": "stir_fry"
+      },
+      {
+       "name": "Mận",
+       "course": "dessert"
+      }
+     ]
+    },
+    {
+     "meal_type": "snack",
+     "dishes": [
+      {
+       "name": "Bánh mì xúc xích chà bông",
+       "course": "staple"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "date": "2026-09-22",
+   "weekday": 3,
+   "meals": [
+    {
+     "meal_type": "lunch",
+     "dishes": [
+      {
+       "name": "Cơm",
+       "course": "staple"
+      },
+      {
+       "name": "Chả tôm",
+       "course": "main"
+      },
+      {
+       "name": "Canh bí đỏ cà rốt nấu thịt bò",
+       "course": "soup"
+      },
+      {
+       "name": "Rau muống xào thịt heo",
+       "course": "stir_fry"
+      },
+      {
+       "name": "Rau câu sữa tươi",
+       "course": "dessert"
+      }
+     ]
+    },
+    {
+     "meal_type": "snack",
+     "dishes": [
+      {
+       "name": "Mì nấu thịt",
+       "course": "staple"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "date": "2026-09-23",
+   "weekday": 4,
+   "meals": [
+    {
+     "meal_type": "lunch",
+     "dishes": [
+      {
+       "name": "Cơm",
+       "course": "staple"
+      },
+      {
+       "name": "Trứng cút kho thịt",
+       "course": "main"
+      },
+      {
+       "name": "Canh cải nhúng khoai lang nấu thịt heo",
+       "course": "soup"
+      },
+      {
+       "name": "Mướp xào thịt gà",
+       "course": "stir_fry"
+      },
+      {
+       "name": "Thanh long",
+       "course": "dessert"
+      }
+     ]
+    },
+    {
+     "meal_type": "snack",
+     "dishes": [
+      {
+       "name": "Bánh mì nhân ngọt",
+       "course": "staple"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "date": "2026-09-24",
+   "weekday": 5,
+   "meals": [
+    {
+     "meal_type": "lunch",
+     "dishes": [
+      {
+       "name": "Cơm",
+       "course": "staple"
+      },
+      {
+       "name": "Thịt gà kho gừng",
+       "course": "main"
+      },
+      {
+       "name": "Canh khoai mỡ nấu tôm",
+       "course": "soup"
+      },
+      {
+       "name": "Cải ngọt nấm rơm xào đậu hũ",
+       "course": "stir_fry"
+      },
+      {
+       "name": "Sữa chua",
+       "course": "dessert"
+      }
+     ]
+    },
+    {
+     "meal_type": "snack",
+     "dishes": [
+      {
+       "name": "Bánh giò",
+       "course": "staple"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "date": "2026-09-25",
+   "weekday": 6,
+   "meals": [
+    {
+     "meal_type": "lunch",
+     "dishes": [
+      {
+       "name": "Bánh canh",
+       "course": "staple"
+      },
+      {
+       "name": "Chuối",
+       "course": "dessert"
+      }
+     ]
+    },
+    {
+     "meal_type": "snack",
+     "dishes": [
+      {
+       "name": "Bánh trung thu hình thỏ",
+       "course": "dessert"
+      },
+      {
+       "name": "Sữa Vinamilk",
+       "course": "drink"
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "notes": null
+}

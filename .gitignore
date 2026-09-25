@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+.venv/
+.env
+scratch/
+data/images/
+data/*.jsonl

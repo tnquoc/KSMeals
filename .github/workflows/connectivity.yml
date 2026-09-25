@@ -1,0 +1,47 @@
+# Manual check: can GitHub's runners reach the school sites, Gemini and Supabase?
+# Run it from the Actions tab -> "Connectivity check" -> "Run workflow".
+name: Connectivity check
+
+on:
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: pipeline/requirements.txt
+
+      - run: pip install -r pipeline/requirements.txt
+
+      - name: School websites
+        run: |
+          for url in https://thlevansi.hcm.edu.vn/sitemap.xml https://phuongtansonhoa.hcm.edu.vn/ https://fileth.hcm.shieldix.app/; do
+            curl -s -o /dev/null -m 60 -A "KSMealsBot/0.1" -w "%{http_code} %{time_total}s  $url\n" "$url" || echo "FAILED  $url"
+          done
+
+      - name: Gemini and Supabase
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+        run: |
+          python - <<'EOF'
+          from openai import OpenAI
+          from pipeline import config
+          from pipeline.sync import Supabase
+
+          print("gemini key set:", bool(config.LLM_API_KEY))
+          models = OpenAI(api_key=config.LLM_API_KEY, base_url=config.LLM_BASE_URL).models.list()
+          print("gemini ok:", any(config.LLM_MODEL in m.id for m in models))
+
+          db = Supabase(config.SUPABASE_URL, config.SUPABASE_SECRET_KEY)
+          r = db.http.get("/schools", params={"select": "id", "limit": "1"}, headers={"Prefer": "count=exact"})
+          print("supabase:", r.status_code, r.headers.get("content-range"))
+          EOF
