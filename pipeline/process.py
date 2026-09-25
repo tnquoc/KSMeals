@@ -69,13 +69,39 @@ def call_with_backoff(fn, attempts: int = 5):
         time.sleep(delay)
 
 
+MEAL_TYPES = ("breakfast", "lunch", "snack")
+# Schools often name tray photos after the meal: sang_2192026.jpg, trua_..., xe_...
+TRAY_FILE_RE = [
+    ("breakfast", re.compile(r"(?:^|[\W_])(?:sang|bua-?sang|breakfast)(?:[\W_]|$)")),
+    ("snack", re.compile(r"(?:^|[\W_])(?:xe|bua-?xe|chieu|bua-?phu|snack)(?:[\W_]|$)")),
+    ("lunch", re.compile(r"(?:^|[\W_])(?:trua|bua-?trua|lunch)(?:[\W_]|$)")),
+]
+
+
+def tray_meal_type(url: str, model_guess: str | None) -> str:
+    """Which meal a tray photo shows: file name first, then the model's guess, else lunch."""
+    name = url.rsplit("/", 1)[-1].lower()
+    for meal_type, pattern in TRAY_FILE_RE:
+        if pattern.search(name):
+            return meal_type
+    return model_guess if model_guess in MEAL_TYPES else "lunch"
+
+
+def tray_rows(post: dict, ocr: dict, day: date) -> list[dict]:
+    guesses = ocr.get("tray_meal_types") or []
+    by_meal: dict[str, list[str]] = {}
+    for i, url in enumerate(post["image_urls"]):
+        guess = guesses[i] if i < len(guesses) else None
+        by_meal.setdefault(tray_meal_type(url, guess), []).append(url)
+    return [{"date": day.isoformat(), "meal_type": m, "tray_image_urls": urls} for m, urls in by_meal.items()]
+
+
 def interpret(post: dict, ocr: dict) -> tuple[list[dict], list[dict]]:
     """OCR output -> (meal rows, tray rows). Sets post status/error/kind."""
     published = date.fromisoformat(post["published_at"])
     if ocr.get("kind") == "tray_photo":
         post["kind"], post["status"], post["error"] = "tray", "published", None
-        d = tray_date(post["title"], published)
-        return [], [{"date": d.isoformat(), "meal_type": "lunch", "tray_image_urls": post["image_urls"]}]
+        return [], tray_rows(post, ocr, tray_date(post["title"], published))
     if ocr.get("kind") != "weekly_menu":
         post["status"], post["error"] = "not_menu", f"kind={ocr.get('kind')}"
         return [], []

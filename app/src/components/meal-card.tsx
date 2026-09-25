@@ -7,7 +7,7 @@ import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import type { Meal } from '@/lib/api';
-import { ALLERGEN, COURSE, MEAL } from '@/lib/labels';
+import { ALLERGEN, COURSE, COURSE_ICON, MEAL } from '@/lib/labels';
 
 export function MealCard({ meal }: { meal: Meal }) {
   const theme = useTheme();
@@ -21,12 +21,20 @@ export function MealCard({ meal }: { meal: Meal }) {
 
       {meal.dishes.map((dish, i) => (
         <View key={`${dish}-${i}`} style={styles.dish}>
-          <ThemedText type="small" themeColor="textSecondary" style={styles.course}>
-            {COURSE[meal.courses[i]] ?? ''}
-          </ThemedText>
-          <ThemedText style={styles.dishName}>{dish}</ThemedText>
+          <ThemedText style={styles.icon}>{COURSE_ICON[meal.courses[i]] ?? COURSE_ICON.other}</ThemedText>
+          <View style={styles.dishText}>
+            <ThemedText style={styles.dishName}>{dish}</ThemedText>
+            {COURSE[meal.courses[i]] ? (
+              <ThemedText type="small" themeColor="textSecondary" style={styles.course}>
+                {COURSE[meal.courses[i]]}
+              </ThemedText>
+            ) : null}
+          </View>
         </View>
       ))}
+      {!meal.dishes.length ? (
+        <ThemedText type="small" themeColor="textSecondary">Trường chỉ đăng ảnh, chưa có thực đơn dạng chữ.</ThemedText>
+      ) : null}
 
       {n?.kcal ? (
         <ThemedText type="small" themeColor="textSecondary" style={styles.nutrition}>
@@ -39,6 +47,9 @@ export function MealCard({ meal }: { meal: Meal }) {
 
       {meal.allergens.length ? (
         <View style={styles.chips}>
+          <ThemedText type="small" themeColor="textSecondary" style={styles.chipsLabel}>
+            ⚠️ Có thể chứa:
+          </ThemedText>
           {meal.allergens.map((a) => (
             <View key={a} style={[styles.chip, { backgroundColor: theme.warnSoft }]}>
               <ThemedText type="smallBold" style={{ color: theme.warn, fontSize: 12 }}>
@@ -49,6 +60,11 @@ export function MealCard({ meal }: { meal: Meal }) {
         </View>
       ) : null}
 
+      {meal.tray_image_urls.length ? (
+        <ThemedText type="small" themeColor="textSecondary" style={styles.traysLabel}>
+          📷 Ảnh suất ăn thực tế do trường chụp
+        </ThemedText>
+      ) : null}
       {meal.tray_image_urls.length ? (
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.trays}>
           {meal.tray_image_urls.map((url) => (
@@ -77,15 +93,25 @@ const styles = StyleSheet.create({
   },
   dish: {
     flexDirection: 'row',
-    alignItems: 'baseline',
+    alignItems: 'flex-start',
     gap: Spacing.two,
+    paddingVertical: 2,
   },
-  course: {
-    width: 84,
-    fontSize: 12,
+  icon: {
+    fontSize: 20,
+    lineHeight: 26,
+    width: 28,
+    textAlign: 'center',
+  },
+  dishText: {
+    flex: 1,
   },
   dishName: {
-    flex: 1,
+    lineHeight: 22,
+  },
+  course: {
+    fontSize: 12,
+    lineHeight: 16,
   },
   nutrition: {
     marginTop: Spacing.two,
@@ -99,6 +125,14 @@ const styles = StyleSheet.create({
     gap: Spacing.one,
     marginTop: Spacing.two,
   },
+  chipsLabel: {
+    fontSize: 12,
+    alignSelf: 'center',
+  },
+  traysLabel: {
+    fontSize: 12,
+    marginTop: Spacing.two,
+  },
   chip: {
     borderRadius: 999,
     paddingHorizontal: Spacing.two,
@@ -106,7 +140,7 @@ const styles = StyleSheet.create({
   },
   trays: {
     gap: Spacing.two,
-    marginTop: Spacing.two,
+    marginTop: Spacing.one,
   },
   tray: {
     width: 104,

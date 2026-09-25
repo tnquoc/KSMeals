@@ -6,6 +6,7 @@ from pathlib import Path
 from pipeline.allergens import detect
 from pipeline.crawl import parse_post
 from pipeline.dates import parse_slug_range, parse_title_range
+from pipeline.process import interpret, tray_meal_type
 from pipeline.discover import parse_schools, parse_ward_codes
 from pipeline.split import build_meals
 from pipeline.survey import classify, is_menu_post, parse_sitemap
@@ -144,6 +145,22 @@ def test_build_meals_trusts_date_confirmed_by_title():
 def test_build_meals_rejects_non_menu():
     rows, issues = build_meals({"kind": "tray_photo", "days": []}, "", "", date(2026, 9, 18))
     assert rows == [] and issues
+
+
+def test_tray_photos_split_by_meal():
+    base = "https://fileth.hcm.shieldix.app/uploadimages/news/2026/x/2026_9/21/"
+    post = {"image_urls": [base + "sang_2192026159.jpg", base + "trua_21920261513.jpg",
+                           base + "xe_2192026159.jpg", base + "img_001.jpg"],
+            "title": "Hình ảnh suất ăn ngày 21/9/2026", "published_at": "2026-09-21", "url": "", "kind": "menu"}
+    # File names win; the last photo has no hint, so the model's guess (snack) is used.
+    ocr = {"kind": "tray_photo", "days": [], "tray_meal_types": ["lunch", "lunch", "lunch", "snack"]}
+    _, trays = interpret(post, ocr)
+    by_meal = {t["meal_type"]: [u.rsplit("/", 1)[-1] for u in t["tray_image_urls"]] for t in trays}
+    assert by_meal == {"breakfast": ["sang_2192026159.jpg"], "lunch": ["trua_21920261513.jpg"],
+                       "snack": ["xe_2192026159.jpg", "img_001.jpg"]}
+    assert {t["date"] for t in trays} == {"2026-09-21"}
+    # "xe" must be a whole word: "xeo" or "sangtao" are not hints.
+    assert tray_meal_type(base + "banh-xeo.jpg", None) == "lunch"
 
 
 def test_allergen_keywords():

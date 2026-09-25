@@ -56,6 +56,11 @@ MENU_SCHEMA = {
             },
         },
         "notes": {"type": "string", "nullable": True},
+        "tray_meal_types": {
+            "type": "array",
+            "items": {"type": "string", "enum": ["breakfast", "lunch", "snack"]},
+            "description": "For tray_photo only: one entry per image, in order",
+        },
     },
     "required": ["kind", "days"],
 }
@@ -71,7 +76,10 @@ Rules:
 - course: Cơm/bún/phở/mì as the base -> staple; món mặn -> main; canh -> soup; món xào -> stir_fry; tráng miệng/trái cây -> dessert; sữa/nước -> drink.
 - A cell merged across several columns is ONE dish (e.g. "Bánh canh" spanning main+soup is a single staple dish).
 - A cell listing several items ("Bánh trung thu, Sữa Vinamilk") is several dishes.
-- Leave out decorative slogans. Put anything unusual (holidays, "nghỉ", vegetarian days) in notes."""
+- Leave out decorative slogans. Put anything unusual (holidays, "nghỉ", vegetarian days) in notes.
+- For tray_photo: fill tray_meal_types with one value per image, in the order given, guessing the meal
+  from the food and any caption (noodles/porridge/bread -> breakfast; rice with dishes -> lunch;
+  sweet snack, cake, milk, fruit -> snack). If unsure, use lunch."""
 
 
 def image_to_data_url(data: bytes) -> str:

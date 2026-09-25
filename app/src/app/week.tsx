@@ -6,9 +6,9 @@ import { NoSchool } from '@/components/no-school';
 import { Screen } from '@/components/screen';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
+import { useMeals } from '@/hooks/use-meals';
 import { useTheme } from '@/hooks/use-theme';
-import { useWeekMeals } from '@/hooks/use-week-meals';
-import { addDays, dayMonth, isSameDay, iso, schoolWeekStart, weekDays, weekdayName } from '@/lib/dates';
+import { addDays, dayMonth, displayWeek, isSameDay, iso, mondayOf, weekDays, weekdayName } from '@/lib/dates';
 import { DISCLAIMER } from '@/lib/labels';
 import { useSchool } from '@/lib/school-store';
 
@@ -24,9 +24,12 @@ function NavButton({ label, onPress }: { label: string; onPress: () => void }) {
 export default function WeekScreen() {
   const theme = useTheme();
   const { school, loaded } = useSchool();
-  const [monday, setMonday] = useState(() => schoolWeekStart());
-  const { meals, sources, loading, refreshing, error, reload } = useWeekMeals(school?.id, monday);
-  const today = new Date();
+  const [today] = useState(() => new Date());
+  const thisMonday = mondayOf(today);
+  // null = automatic week (see displayWeek); set once the user navigates.
+  const [chosen, setChosen] = useState<Date | null>(null);
+  const from = chosen ?? thisMonday;
+  const { meals, sources, loading, refreshing, error, reload } = useMeals(school?.id, from, addDays(from, chosen ? 4 : 11));
 
   if (!loaded) return <Screen>{null}</Screen>;
   if (!school) {
@@ -37,6 +40,8 @@ export default function WeekScreen() {
     );
   }
 
+  const auto = displayWeek(today, meals);
+  const monday = chosen ?? auto.monday;
   const friday = addDays(monday, 4);
 
   return (
@@ -47,24 +52,31 @@ export default function WeekScreen() {
       </View>
 
       <View style={styles.navRow}>
-        <NavButton label="‹ Tuần trước" onPress={() => setMonday(addDays(monday, -7))} />
+        <NavButton label="‹ Tuần trước" onPress={() => setChosen(addDays(monday, -7))} />
         <ThemedText type="smallBold" style={styles.range}>
           {dayMonth(monday)} – {dayMonth(friday)}
         </ThemedText>
-        <NavButton label="Tuần sau ›" onPress={() => setMonday(addDays(monday, 7))} />
+        <NavButton label="Tuần sau ›" onPress={() => setChosen(addDays(monday, 7))} />
       </View>
 
+      {!chosen && auto.fallback && !loading ? (
+        <ThemedText type="small" themeColor="textSecondary">
+          Trường chưa đăng thực đơn tuần sau, đang hiện thực đơn tuần này.
+        </ThemedText>
+      ) : null}
       {error ? <ThemedText style={{ color: theme.warn }}>Không tải được thực đơn: {error}</ThemedText> : null}
 
       {loading ? <ActivityIndicator style={styles.spinner} /> : null}
-      {!loading && weekDays(monday).map((d) => (
-        <View key={iso(d)} style={styles.day}>
-          <ThemedText type="smallBold" style={isSameDay(d, today) ? { color: theme.accent } : undefined}>
-            {weekdayName(d)} {dayMonth(d)}{isSameDay(d, today) ? ' · Hôm nay' : ''}
-          </ThemedText>
-          <DayMenu meals={meals.filter((m) => m.date === iso(d))} sources={sources} />
-        </View>
-      ))}
+      {!loading &&
+        weekDays(monday).map((d) => (
+          <View key={iso(d)} style={styles.day}>
+            <ThemedText type="smallBold" style={isSameDay(d, today) ? { color: theme.accent } : undefined}>
+              {weekdayName(d)} {dayMonth(d)}
+              {isSameDay(d, today) ? ' · Hôm nay' : ''}
+            </ThemedText>
+            <DayMenu meals={meals.filter((m) => m.date === iso(d))} sources={sources} />
+          </View>
+        ))}
       <ThemedText type="small" themeColor="textSecondary">{DISCLAIMER}</ThemedText>
     </Screen>
   );

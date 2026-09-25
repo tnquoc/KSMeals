@@ -1,4 +1,5 @@
 /** Local-date helpers. Dates travel as YYYY-MM-DD strings, like in the database. */
+import type { Meal } from '@/lib/api';
 
 export function iso(d: Date): string {
   const m = String(d.getMonth() + 1).padStart(2, '0');
@@ -6,26 +7,27 @@ export function iso(d: Date): string {
   return `${d.getFullYear()}-${m}-${day}`;
 }
 
-export function parseIso(s: string): Date {
-  const [y, m, d] = s.split('-').map(Number);
-  return new Date(y, m - 1, d);
-}
-
 export function addDays(d: Date, n: number): Date {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
 }
 
-/** Monday of the school week to show: this week on weekdays, next week on weekends. */
-export function schoolWeekStart(today: Date = new Date()): Date {
-  const wd = today.getDay(); // 0 = Sunday
-  const shift = wd === 0 ? 1 : wd === 6 ? 2 : 1 - wd;
-  return addDays(today, shift);
+export const isWeekend = (d: Date) => d.getDay() === 0 || d.getDay() === 6;
+
+/** Monday of the calendar week containing d (Sunday belongs to the week before). */
+export function mondayOf(d: Date): Date {
+  return addDays(d, -((d.getDay() + 6) % 7));
 }
 
-/** The school day to open on: today, or next Monday on weekends. */
-export function defaultSchoolDay(today: Date = new Date()): Date {
-  const wd = today.getDay();
-  return wd === 0 || wd === 6 ? schoolWeekStart(today) : new Date(today.getFullYear(), today.getMonth(), today.getDate());
+/**
+ * Which school week to show by default. Weekdays: this week. Weekends: next week if the
+ * school already posted it, otherwise this week (so parents don't land on an empty screen).
+ */
+export function displayWeek(today: Date, meals: Meal[]): { monday: Date; fallback: boolean } {
+  const thisMonday = mondayOf(today);
+  if (!isWeekend(today)) return { monday: thisMonday, fallback: false };
+  const next = addDays(thisMonday, 7);
+  const nextPosted = meals.some((m) => m.dishes.length && m.date >= iso(next) && m.date <= iso(addDays(next, 4)));
+  return nextPosted ? { monday: next, fallback: false } : { monday: thisMonday, fallback: true };
 }
 
 export function weekDays(monday: Date): Date[] {

@@ -37,7 +37,14 @@ export type Meal = {
   source_post_id: number | null;
 };
 
-export type SourcePost = { id: number; url: string; title: string };
+export type SourcePost = {
+  id: number;
+  url: string;
+  title: string;
+  kind: 'menu' | 'tray';
+  image_urls: string[]; // the school's original menu image(s)
+  doc_urls: string[]; // or the menu as PDF/Word/Excel
+};
 
 async function get<T>(path: string): Promise<T> {
   if (!SUPABASE_URL || !PUBLISHABLE_KEY) {
@@ -63,6 +70,14 @@ export function fetchMeals(schoolId: number, from: string, to: string): Promise<
 
 export async function fetchSources(ids: number[]): Promise<Record<number, SourcePost>> {
   if (!ids.length) return {};
-  const rows = await get<SourcePost[]>(`raw_posts?select=id,url,title&id=in.(${ids.join(',')})`);
-  return Object.fromEntries(rows.map((p) => [p.id, p]));
+  const filter = `id=in.(${ids.join(',')})`;
+  const rows = await get<Omit<SourcePost, 'image_urls' | 'doc_urls'>[]>(`raw_posts?select=id,url,title,kind&${filter}`);
+  // Media columns need migration 0005; without it the links still work.
+  const media = await get<Pick<SourcePost, 'id' | 'image_urls' | 'doc_urls'>[]>(
+    `raw_posts?select=id,image_urls,doc_urls&${filter}`,
+  ).catch(() => []);
+  const byId = Object.fromEntries(media.map((m) => [m.id, m]));
+  return Object.fromEntries(
+    rows.map((p) => [p.id, { ...p, image_urls: byId[p.id]?.image_urls ?? [], doc_urls: byId[p.id]?.doc_urls ?? [] }]),
+  );
 }

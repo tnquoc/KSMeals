@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { RefreshControl, ScrollView, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
@@ -13,11 +13,13 @@ type Props = {
 
 /** Scrollable page with safe areas, tab bar inset and optional pull-to-refresh. */
 export function Screen({ children, refreshing = false, onRefresh }: Props) {
+  // The tab bar sits above the home indicator, so both must be cleared at the bottom.
+  const insets = useSafeAreaInsets();
   return (
     <ThemedView style={styles.root}>
       <SafeAreaView edges={['top']} style={styles.safe}>
         <ScrollView
-          contentContainerStyle={styles.content}
+          contentContainerStyle={[styles.content, { paddingBottom: BottomTabInset + insets.bottom + Spacing.five }]}
           refreshControl={onRefresh ? <RefreshControl refreshing={refreshing} onRefresh={onRefresh} /> : undefined}>
           {children}
         </ScrollView>
@@ -31,7 +33,6 @@ const styles = StyleSheet.create({
   safe: { flex: 1 },
   content: {
     padding: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.four,
     gap: Spacing.three,
     width: '100%',
     maxWidth: MaxContentWidth,

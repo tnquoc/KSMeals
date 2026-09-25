@@ -16,6 +16,18 @@ export const COURSE: Record<string, string> = {
   other: '',
 };
 
+// Decorative only: schools don't publish per-dish photos, so no fake food pictures.
+export const COURSE_ICON: Record<string, string> = {
+  staple: '🍚',
+  main: '🍖',
+  soup: '🍲',
+  stir_fry: '🥬',
+  side: '🥗',
+  dessert: '🍉',
+  drink: '🥛',
+  other: '🍽️',
+};
+
 // Same ids as pipeline/allergens.py
 export const ALLERGEN: Record<string, string> = {
   crustacean: 'Tôm, cua',
@@ -32,5 +44,5 @@ export const ALLERGEN: Record<string, string> = {
 
 export const DISCLAIMER =
   'Dinh dưỡng là ước tính bằng AI cho một suất ăn thông thường theo độ tuổi. ' +
-  'Nhãn dị ứng được dò theo tên món và nguyên liệu thường dùng, có thể thiếu hoặc thừa. ' +
-  'Hãy xác nhận với nhà trường.';
+  'Nhãn vàng “Có thể chứa” là thành phần thường gây dị ứng, được dò theo tên món và nguyên liệu ' +
+  'thường dùng, nên có thể thiếu hoặc thừa. Nếu con bị dị ứng, hãy xác nhận với nhà trường.';
