@@ -1,18 +1,22 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router';
+import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import Head from 'expo-router/head';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import { useColorScheme } from 'react-native';
 
-import AppTabs from '@/components/app-tabs';
+import { track } from '@/lib/analytics';
 import { SchoolProvider, useSchool } from '@/lib/school-store';
 
 SplashScreen.preventAutoHideAsync();
 
-function HideSplashWhenReady() {
-  const { loaded } = useSchool();
+function WhenProfileLoaded() {
+  const { loaded, school } = useSchool();
   useEffect(() => {
-    if (loaded) SplashScreen.hideAsync();
+    if (!loaded) return;
+    SplashScreen.hideAsync();
+    track('app_open', school?.code);
+    // Once per launch, as soon as the saved profile is read.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loaded]);
   return null;
 }
@@ -26,8 +30,11 @@ export default function RootLayout() {
         <title>KSMeals · Thực đơn bán trú</title>
       </Head>
       <SchoolProvider>
-        <HideSplashWhenReady />
-        <AppTabs />
+        <WhenProfileLoaded />
+        <Stack>
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="privacy" options={{ title: 'Quyền riêng tư', headerBackTitle: 'Quay lại' }} />
+        </Stack>
       </SchoolProvider>
     </ThemeProvider>
   );

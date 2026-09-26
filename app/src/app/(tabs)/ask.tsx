@@ -20,6 +20,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { track } from '@/lib/analytics';
 import { askAssistant, type ChatMessage } from '@/lib/chat';
 import { useSchool } from '@/lib/school-store';
 
@@ -79,6 +80,7 @@ export default function AskScreen() {
     setChats((c) => ({ ...c, [school.id]: next }));
     setInput('');
     setBusy(true);
+    track('chat_sent', school.code, { suggested: SUGGESTIONS.includes(question), turn: next.length });
     try {
       const { reply, remaining: left } = await askAssistant(school.id, next, allergies);
       setChats((c) => ({ ...c, [school.id]: [...next, { role: 'assistant', content: reply }] }));

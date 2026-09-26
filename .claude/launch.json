@@ -4,14 +4,43 @@
     {
       "name": "devserver",
       "runtimeExecutable": "uv",
-      "runtimeArgs": ["run", "python", "-m", "pipeline.devserver", "--port", "8765"],
+      "runtimeArgs": [
+        "run",
+        "python",
+        "-m",
+        "pipeline.devserver",
+        "--port",
+        "8765"
+      ],
       "port": 8765
     },
     {
       "name": "app-web",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["--prefix", "app", "exec", "--", "expo", "start", "app", "--port", "8081"],
+      "runtimeArgs": [
+        "--prefix",
+        "app",
+        "exec",
+        "--",
+        "expo",
+        "start",
+        "app",
+        "--port",
+        "8081"
+      ],
       "port": 8081
+    },
+    {
+      "name": "pages",
+      "runtimeExecutable": "python",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8090",
+        "--directory",
+        "scratch/pages"
+      ],
+      "port": 8090
     }
   ]
 }

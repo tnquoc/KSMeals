@@ -1,15 +1,19 @@
-import { useState } from 'react';
+import { useLocalSearchParams } from 'expo-router';
+import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
 import { DayMenu } from '@/components/day-menu';
 import { NoSchool } from '@/components/no-school';
 import { PageHeader } from '@/components/page-header';
 import { SchoolPill } from '@/components/school-pill';
+import { ShareButton } from '@/components/share-button';
 import { Screen } from '@/components/screen';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { useMeals } from '@/hooks/use-meals';
 import { useTheme } from '@/hooks/use-theme';
+import { track } from '@/lib/analytics';
+import { fetchSchoolByCode } from '@/lib/api';
 import {
   addDays,
   dayMonth,
@@ -27,7 +31,21 @@ import { useSchool } from '@/lib/school-store';
 
 export default function TodayScreen() {
   const theme = useTheme();
-  const { school, loaded, allergies } = useSchool();
+  const { school, loaded, allergies, setSchool } = useSchool();
+  // Shared links carry ?school=<code>: open that school for someone who has not chosen one yet.
+  const { school: linkedCode } = useLocalSearchParams<{ school?: string }>();
+  useEffect(() => {
+    if (!loaded || school || !linkedCode) return;
+    fetchSchoolByCode(linkedCode)
+      .then((s) => {
+        if (s?.active) {
+          setSchool(s);
+          track('school_selected', s.code, { from: 'link' });
+        }
+      })
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loaded, linkedCode]);
   const [today] = useState(() => new Date());
   const thisMonday = mondayOf(today);
   // This week and next week in one request; which one to show depends on what is posted.
@@ -81,7 +99,10 @@ export default function TodayScreen() {
               return (
                 <Pressable
                   key={iso(d)}
-                  onPress={() => setPicked(d)}
+                  onPress={() => {
+                    setPicked(d);
+                    track('view_day', school.code, { weekday: d.getDay() });
+                  }}
                   style={[styles.day, { backgroundColor: on ? theme.accent : theme.backgroundElement, borderColor: theme.border }]}>
                   <ThemedText type="smallBold" style={{ color: on ? theme.onAccent : theme.text }}>{weekdayShort(d)}</ThemedText>
                   <ThemedText type="small" style={{ color: on ? theme.onAccent : theme.textSecondary }}>{dayMonth(d)}</ThemedText>
@@ -96,6 +117,9 @@ export default function TodayScreen() {
           </View>
           {error ? <ThemedText style={{ color: theme.warn }}>Không tải được thực đơn: {error}</ThemedText> : null}
           <DayMenu meals={meals.filter((m) => m.date === iso(selected))} sources={sources} />
+          {meals.some((m) => m.date === iso(selected) && m.dishes.length) ? (
+            <ShareButton school={school} day={selected} meals={meals.filter((m) => m.date === iso(selected))} />
+          ) : null}
         </>
       )}
       <ThemedText type="small" themeColor="textSecondary">{DISCLAIMER}</ThemedText>

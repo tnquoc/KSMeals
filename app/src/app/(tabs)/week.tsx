@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
 import { DayMenu } from '@/components/day-menu';
@@ -10,6 +10,7 @@ import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { useMeals } from '@/hooks/use-meals';
 import { useTheme } from '@/hooks/use-theme';
+import { track } from '@/lib/analytics';
 import { addDays, dayMonth, displayWeek, isSameDay, iso, mondayOf, weekDays, weekdayName } from '@/lib/dates';
 import { allergyHits, DISCLAIMER } from '@/lib/labels';
 import { useSchool } from '@/lib/school-store';
@@ -32,6 +33,10 @@ export default function WeekScreen() {
   const [chosen, setChosen] = useState<Date | null>(null);
   const from = chosen ?? thisMonday;
   const { meals, sources, loading, refreshing, error, reload } = useMeals(school?.id, from, addDays(from, chosen ? 4 : 11));
+  useEffect(() => {
+    if (school) track('view_week', school.code, { offset: chosen ? Math.round((chosen.getTime() - thisMonday.getTime()) / 604800000) : 0 });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [school?.code, chosen]);
 
   if (!loaded) return <Screen>{null}</Screen>;
   if (!school) {

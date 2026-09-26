@@ -2,6 +2,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 
+import { track } from '@/lib/analytics';
 import type { School } from '@/lib/api';
 
 const SCHOOL_KEY = 'ksmeals.school';
@@ -44,11 +45,10 @@ export function SchoolProvider({ children }: { children: ReactNode }) {
   };
 
   const toggleAllergy = (id: string) => {
-    setAllergies((current) => {
-      const next = current.includes(id) ? current.filter((a) => a !== id) : [...current, id];
-      AsyncStorage.setItem(ALLERGIES_KEY, JSON.stringify(next)).catch(() => {});
-      return next;
-    });
+    const next = allergies.includes(id) ? allergies.filter((a) => a !== id) : [...allergies, id];
+    setAllergies(next);
+    AsyncStorage.setItem(ALLERGIES_KEY, JSON.stringify(next)).catch(() => {});
+    track('allergies_set', school?.code, { count: next.length });
   };
 
   return (

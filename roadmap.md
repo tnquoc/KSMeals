@@ -4,7 +4,7 @@
 
 **Mục tiêu v1:** app iOS + Android cho phụ huynh TP.HCM xem thực đơn bán trú của trường con, có dinh dưỡng ước tính bằng AI và một chatbot nhỏ. Mục đích là trả lời một câu hỏi: **phụ huynh có mở app đều đặn không?**
 
-**Đang ở:** 👉 Bản web đã online (tnquoc.github.io/KSMeals). Tiếp: đo lường người dùng, chia sẻ thực đơn, dị ứng 2 mức; store + thông báo khi có nhu cầu thật.
+**Đang ở:** 👉 Đủ tính năng v1 + chính sách + chia sẻ + đo lường. Tiếp: email liên hệ, chia sẻ link cho phụ huynh thật, rồi Google Play (build EAS + thông báo buổi sáng).
 
 ---
 
@@ -119,8 +119,9 @@ Thư mục `app/`, Expo SDK 57 + Expo Router, TypeScript. Chạy: `cd app && npx
 - [ ] Push thông báo buổi sáng (Expo Notifications, cần development build)
 - [x] "Báo tôi khi có": tìm được cả 1.293 trường; trường chưa có dữ liệu có nút 🔔, ghi qua hàm SQL `request_school` (migration 0007, app không ghi thẳng bảng nào), hiện số phụ huynh cùng yêu cầu. Xem nhu cầu: `uv run python -m pipeline.demand [--add]`
 - [x] **Bản web công khai (miễn phí): https://tnquoc.github.io/KSMeals/** — `.github/workflows/web.yml` build Expo web tĩnh (base `/KSMeals`) và đăng GitHub Pages mỗi khi `app/` thay đổi; "Thêm vào màn hình chính" có icon + manifest. Dùng để kiểm chứng nhu cầu trước khi trả phí store
-- [ ] Nút chia sẻ thực đơn hôm nay dạng ảnh
-- [ ] Analytics (PostHog hoặc Firebase)
+- [x] Chia sẻ thực đơn hôm nay (chữ, dán vào Zalo) kèm link `?school=<code>` mở đúng trường cho người nhận
+- [x] Trang chính sách quyền riêng tư `/privacy` (URL cho store: https://tnquoc.github.io/KSMeals/privacy) + dòng "ứng dụng độc lập" ở Hồ sơ. ⏳ Cần email liên hệ công khai
+- [x] Đo lường ẩn danh (migration 0008, RPC `track`, không lưu nội dung): `uv run python -m pipeline.stats`
 - [x] Icon + màn hình khởi động (`scripts/make_icons.py build shield_steam`): bát cơm, lá, hơi nóng, khiên tick; icon iOS 1024, adaptive + monochrome Android, splash sáng/tối, favicon. Tên dưới icon "KSMeals"; tên trên store dự kiến "KSMeals – Thực đơn bán trú"
 - [ ] Dị ứng 2 mức: 🔴 "Có …" (tên món) và 🟠 "Thường có …" (công thức phổ biến), nguyên liệu theo từng món thay vì cả bữa
 

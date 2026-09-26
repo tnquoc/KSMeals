@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { router } from 'expo-router';
+import { Link, router } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from 'react-native';
 
@@ -8,6 +8,7 @@ import { Screen } from '@/components/screen';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { track } from '@/lib/analytics';
 import { fetchSchools, requestSchool, type School } from '@/lib/api';
 import { getDeviceId } from '@/lib/device';
 import { ALLERGEN, LEVEL } from '@/lib/labels';
@@ -40,6 +41,7 @@ function RequestButton({ school, count, onDone }: { school: School; count?: numb
         setFailed(false);
         try {
           onDone(await requestSchool(await getDeviceId(), school.code));
+          track('school_requested', school.code);
         } catch {
           setFailed(true);
         } finally {
@@ -178,6 +180,7 @@ export default function SchoolScreen() {
               key={s.id}
               onPress={() => {
                 setSchool(s);
+                track('school_selected', s.code);
                 router.navigate('/');
               }}
               style={row}>
@@ -186,6 +189,16 @@ export default function SchoolScreen() {
             </Pressable>
           );
         })}
+      </View>
+
+      <View style={[styles.about, { borderTopColor: theme.border }]}>
+        <ThemedText type="small" themeColor="textSecondary">
+          KSMeals là ứng dụng độc lập, không phải ứng dụng chính thức của Sở GD&ĐT TP.HCM hay nhà trường. Thực đơn lấy từ
+          website công khai của các trường.
+        </ThemedText>
+        <Link href="/privacy">
+          <ThemedText type="linkPrimary">Chính sách quyền riêng tư ›</ThemedText>
+        </Link>
       </View>
     </Screen>
   );
@@ -198,6 +211,7 @@ const styles = StyleSheet.create({
   search: { borderWidth: StyleSheet.hairlineWidth, borderRadius: Spacing.three, paddingHorizontal: Spacing.three, paddingVertical: Spacing.two, fontSize: 16 },
   list: { gap: Spacing.two },
   row: { borderRadius: Spacing.three, borderWidth: StyleSheet.hairlineWidth, padding: Spacing.three, gap: 2 },
+  about: { borderTopWidth: StyleSheet.hairlineWidth, paddingTop: Spacing.three, marginTop: Spacing.three, gap: Spacing.one },
   request: {
     alignSelf: 'flex-start',
     borderWidth: 1,
