@@ -35,7 +35,7 @@ MENU_SCHEMA = {
                         "items": {
                             "type": "object",
                             "properties": {
-                                "meal_type": {"type": "string", "enum": ["breakfast", "lunch", "snack"]},
+                                "meal_type": {"type": "string", "enum": ["breakfast", "morning_snack", "lunch", "snack"]},
                                 "dishes": {
                                     "type": "array",
                                     "items": {
@@ -58,7 +58,7 @@ MENU_SCHEMA = {
         "notes": {"type": "string", "nullable": True},
         "tray_meal_types": {
             "type": "array",
-            "items": {"type": "string", "enum": ["breakfast", "lunch", "snack"]},
+            "items": {"type": "string", "enum": ["breakfast", "morning_snack", "lunch", "snack"]},
             "description": "For tray_photo only: one entry per image, in order",
         },
     },
@@ -72,7 +72,9 @@ Rules:
 - Copy dish names exactly as written in Vietnamese, with diacritics. Never translate, never invent dishes.
 - One entry in `days` per school day in the table. weekday: Thứ Hai=2, Ba=3, Tư=4, Năm=5, Sáu=6, Bảy=7.
 - date: read it from the table if shown; otherwise derive from the "áp dụng" date range; otherwise null.
-- meal_type: "Bữa sáng" -> breakfast; main meal (cơm, món mặn, canh, xào, tráng miệng) -> lunch; "Bữa xế"/"Bữa phụ"/afternoon -> snack.
+- meal_type: "Bữa sáng" -> breakfast; a snack between breakfast and lunch ("bữa phụ sáng", "xế sáng",
+  "9h", "giữa buổi sáng") -> morning_snack; main meal (cơm, món mặn, canh, xào, tráng miệng) -> lunch;
+  "Bữa xế"/"Bữa phụ chiều"/afternoon -> snack. A day never has two meals of the same meal_type.
 - course: Cơm/bún/phở/mì as the base -> staple; món mặn -> main; canh -> soup; món xào -> stir_fry; tráng miệng/trái cây -> dessert; sữa/nước -> drink.
 - A cell merged across several columns is ONE dish (e.g. "Bánh canh" spanning main+soup is a single staple dish).
 - A cell listing several items ("Bánh trung thu, Sữa Vinamilk") is several dishes.

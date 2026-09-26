@@ -2,8 +2,13 @@ import type { Level, MealType } from '@/lib/api';
 
 export const LEVEL: Record<Level, string> = { mn: 'Mầm non', th: 'Tiểu học', thcs: 'THCS' };
 
-export const MEAL: Record<MealType, string> = { breakfast: 'Bữa sáng', lunch: 'Bữa trưa', snack: 'Bữa xế' };
-export const MEAL_ORDER: MealType[] = ['breakfast', 'lunch', 'snack'];
+export const MEAL: Record<MealType, string> = {
+  breakfast: 'Bữa sáng',
+  morning_snack: 'Bữa phụ sáng',
+  lunch: 'Bữa trưa',
+  snack: 'Bữa xế',
+};
+export const MEAL_ORDER: MealType[] = ['breakfast', 'morning_snack', 'lunch', 'snack'];
 
 export const COURSE: Record<string, string> = {
   staple: 'Món chính',

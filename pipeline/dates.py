@@ -81,10 +81,14 @@ def parse_slug_range(slug: str, anchor: date) -> tuple[date, date] | None:
     return parse_title_range(re.sub(r"-den(?:-ngay)?-", " đến ", slug or ""), anchor)
 
 
+WORDY_DATE_RE = r"(\d{1,2})\s+tháng\s+(\d{1,2})(?:\s+năm\s+(\d{4}))?"
+
+
 def dates_in_text(text: str, anchor: date) -> set[date]:
-    """Every dd/mm(/yyyy) in a title, e.g. {2026-09-25} for 'Bữa ăn ngày 25/09/2026'."""
+    """Every dd/mm(/yyyy) or 'dd tháng mm (năm yyyy)' in a title, e.g. {2026-09-22}."""
     out = set()
-    for m in re.finditer(DATE_RE, text or ""):
+    matches = list(re.finditer(DATE_RE, text or "")) + list(re.finditer(WORDY_DATE_RE, text or "", re.I))
+    for m in matches:
         d, mo, y = m.groups()
         got = _make(int(d), int(mo), int(y) if y else None, anchor)
         if got and abs((got - anchor).days) <= 60:

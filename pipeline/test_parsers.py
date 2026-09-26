@@ -142,6 +142,18 @@ def test_build_meals_trusts_date_confirmed_by_title():
     assert any("not weekday" in i for i in issues)
 
 
+def test_build_meals_wordy_title_date_and_morning_snack():
+    # "NGÀY 22 THÁNG 9" confirms the date even though the model's weekday is off by one.
+    ocr = {"kind": "weekly_menu", "days": [{"date": "2026-09-22", "weekday": 2, "meals": [
+        {"meal_type": "breakfast", "dishes": [{"name": "Bánh mì", "course": "staple"}]},
+        {"meal_type": "morning_snack", "dishes": [{"name": "Sữa", "course": "drink"}]},
+        {"meal_type": "lunch", "dishes": [{"name": "Cơm", "course": "staple"}]},
+        {"meal_type": "snack", "dishes": [{"name": "Bánh flan", "course": "dessert"}]}]}]}
+    rows, issues = build_meals(ocr, "CÔNG KHAI HÓA ĐƠN XUẤT ĂN NGÀY 22 THÁNG 9", "", date(2026, 9, 22))
+    assert issues == []
+    assert [r["meal_type"] for r in rows] == ["breakfast", "morning_snack", "lunch", "snack"]
+
+
 def test_build_meals_rejects_non_menu():
     rows, issues = build_meals({"kind": "tray_photo", "days": []}, "", "", date(2026, 9, 18))
     assert rows == [] and issues

@@ -42,7 +42,7 @@
   <div id="list"><div class="empty">Đang tải…</div></div>
 </main>
 <script>
-const MEAL = { breakfast: "Sáng", lunch: "Trưa", snack: "Xế" };
+const MEAL = { breakfast: "Sáng", morning_snack: "Phụ sáng", lunch: "Trưa", snack: "Xế" };
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 let items = [];
 

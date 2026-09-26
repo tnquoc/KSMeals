@@ -69,7 +69,7 @@ def call_with_backoff(fn, attempts: int = 5):
         time.sleep(delay)
 
 
-MEAL_TYPES = ("breakfast", "lunch", "snack")
+MEAL_TYPES = ("breakfast", "morning_snack", "lunch", "snack")
 # Schools often name tray photos after the meal: sang_2192026.jpg, trua_..., xe_...
 TRAY_FILE_RE = [
     ("breakfast", re.compile(r"(?:^|[\W_])(?:sang|bua-?sang|breakfast)(?:[\W_]|$)")),

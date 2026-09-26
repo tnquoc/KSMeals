@@ -7,7 +7,7 @@ const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL?.replace(/\/rest\/v1\/
 const PUBLISHABLE_KEY = process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
 export type Level = 'mn' | 'th' | 'thcs';
-export type MealType = 'breakfast' | 'lunch' | 'snack';
+export type MealType = 'breakfast' | 'morning_snack' | 'lunch' | 'snack';
 
 export type School = {
   id: number;

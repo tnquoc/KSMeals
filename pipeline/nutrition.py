@@ -18,7 +18,7 @@ from pipeline.process import DailyQuotaExhausted, call_with_backoff
 from pipeline.store import Store
 
 AGE = {"mn": "3-5 tuổi (mầm non)", "th": "6-10 tuổi (tiểu học)", "thcs": "11-14 tuổi (THCS)"}
-MEAL = {"breakfast": "bữa sáng", "lunch": "bữa trưa", "snack": "bữa xế"}
+MEAL = {"breakfast": "bữa sáng", "morning_snack": "bữa phụ sáng", "lunch": "bữa trưa", "snack": "bữa xế"}
 KCAL_RANGE = (40, 1200)  # per meal; outside this the estimate is dropped as nonsense
 
 SCHEMA = {
