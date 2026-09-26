@@ -1,3 +1,4 @@
+import type { ThemeColor } from '@/constants/theme';
 import type { Level, MealType } from '@/lib/api';
 
 export const LEVEL: Record<Level, string> = { mn: 'Mầm non', th: 'Tiểu học', thcs: 'THCS' };
@@ -9,6 +10,21 @@ export const MEAL: Record<MealType, string> = {
   snack: 'Bữa xế',
 };
 export const MEAL_ORDER: MealType[] = ['breakfast', 'morning_snack', 'lunch', 'snack'];
+
+export const MEAL_ICON: Record<MealType, string> = {
+  breakfast: '🌅',
+  morning_snack: '🍎',
+  lunch: '🍱',
+  snack: '🍪',
+};
+
+/** Theme colors of each meal's header band: [text, background]. */
+export const MEAL_TINT: Record<MealType, [ThemeColor, ThemeColor]> = {
+  breakfast: ['mealBreakfast', 'mealBreakfastSoft'],
+  morning_snack: ['mealMorningSnack', 'mealMorningSnackSoft'],
+  lunch: ['mealLunch', 'mealLunchSoft'],
+  snack: ['mealSnack', 'mealSnackSoft'],
+};
 
 export const COURSE: Record<string, string> = {
   staple: 'Món chính',

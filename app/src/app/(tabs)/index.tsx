@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
 import { DayMenu } from '@/components/day-menu';
+import { DaySummary } from '@/components/day-summary';
 import { NoSchool } from '@/components/no-school';
 import { PageHeader } from '@/components/page-header';
 import { SchoolPill } from '@/components/school-pill';
@@ -115,6 +116,12 @@ export default function TodayScreen() {
               );
             })}
           </View>
+          <DaySummary
+            meals={meals.filter((m) => m.date === iso(selected))}
+            day={selected}
+            isToday={isSameDay(selected, today)}
+            allergies={allergies}
+          />
           {meals.some((m) => m.date === iso(selected) && m.dishes.length) ? (
             <ShareButton school={school} day={selected} meals={meals.filter((m) => m.date === iso(selected))} />
           ) : null}

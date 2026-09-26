@@ -21,6 +21,19 @@ export const Colors = {
     warnSoft: '#FFF4E0',
     danger: '#B3261E',
     dangerSoft: '#FDECEA',
+    // One tint per meal (header band of each meal card)
+    mealBreakfast: '#B45309',
+    mealBreakfastSoft: '#FFF1DC',
+    mealMorningSnack: '#BE185D',
+    mealMorningSnackSoft: '#FCE7F1',
+    mealLunch: '#1F7A4D',
+    mealLunchSoft: '#E3F3EA',
+    mealSnack: '#4338CA',
+    mealSnackSoft: '#ECEEFF',
+    // Macro split bar (validated categorical slots 1–3)
+    protein: '#2A78D6',
+    fat: '#EB6834',
+    carbs: '#1BAF7A',
   },
   dark: {
     text: '#E6E9EE',
@@ -35,6 +48,17 @@ export const Colors = {
     warnSoft: '#3A2D17',
     danger: '#F28B82',
     dangerSoft: '#3B1F1D',
+    mealBreakfast: '#F5B971',
+    mealBreakfastSoft: '#33271A',
+    mealMorningSnack: '#F29BC1',
+    mealMorningSnackSoft: '#351F2A',
+    mealLunch: '#5CC58E',
+    mealLunchSoft: '#1D3328',
+    mealSnack: '#A5B4FC',
+    mealSnackSoft: '#252A45',
+    protein: '#3987E5',
+    fat: '#D95926',
+    carbs: '#199E70',
   },
 } as const;
 
