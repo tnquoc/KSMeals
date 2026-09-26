@@ -4,7 +4,7 @@
 
 **Mục tiêu v1:** app iOS + Android cho phụ huynh TP.HCM xem thực đơn bán trú của trường con, có dinh dưỡng ước tính bằng AI và một chatbot nhỏ. Mục đích là trả lời một câu hỏi: **phụ huynh có mở app đều đặn không?**
 
-**Đang ở:** 👉 Phase 3/4: xong chatbot + hồ sơ dị ứng. Tiếp: "báo tôi khi có trường", chia sẻ thực đơn, icon/branding; thông báo buổi sáng để cuối.
+**Đang ở:** 👉 Phase 3/4: xong chatbot, hồ sơ dị ứng, "báo tôi khi có". Tiếp: chia sẻ thực đơn, icon/branding; thông báo buổi sáng để cuối.
 
 ---
 
@@ -117,7 +117,7 @@ Thư mục `app/`, Expo SDK 57 + Expo Router, TypeScript. Chạy: `cd app && npx
 - [x] Góp ý vòng 1: ảnh thực đơn gốc của trường (migration 0005), icon theo loại món, ảnh khay tách đúng bữa (theo tên file `sang_/trua_/xe_`, rồi Gemini đoán), nhãn dị ứng có chú thích "⚠️ Có thể chứa", thanh tab không che nội dung, cuối tuần tự hiện tuần này nếu tuần sau chưa có thực đơn
 - [x] Hồ sơ dị ứng của con (tab "Hồ sơ"): chọn 10 nhóm dị ứng, lưu trên máy; món trùng được tô đỏ "⛔ Có thể chứa…", thành phần ẩn cảnh báo riêng; thanh ngày hiện ⚠️, tab Cả tuần ghi "⛔ N món cần chú ý"; chatbot nhận hồ sơ và chủ động nhắc
 - [ ] Push thông báo buổi sáng (Expo Notifications, cần development build)
-- [ ] Màn "Trường của bạn chưa được hỗ trợ" + nút "Báo tôi khi có"
+- [x] "Báo tôi khi có": tìm được cả 1.293 trường; trường chưa có dữ liệu có nút 🔔, ghi qua hàm SQL `request_school` (migration 0007, app không ghi thẳng bảng nào), hiện số phụ huynh cùng yêu cầu. Xem nhu cầu: `uv run python -m pipeline.demand [--add]`
 - [ ] Nút chia sẻ thực đơn hôm nay dạng ảnh
 - [ ] Analytics (PostHog hoặc Firebase)
 - [ ] Icon, splash, tên hiển thị trên store

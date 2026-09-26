@@ -15,6 +15,7 @@ export type School = {
   name: string;
   level: Level;
   ward: string;
+  active: boolean; // has published menus in the app
 };
 
 export type Nutrition = {
@@ -47,19 +48,44 @@ export type SourcePost = {
   doc_urls: string[]; // or the menu as PDF/Word/Excel
 };
 
-async function get<T>(path: string): Promise<T> {
+function config() {
   if (!SUPABASE_URL || !PUBLISHABLE_KEY) {
     throw new Error('Missing EXPO_PUBLIC_SUPABASE_URL / EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY in app/.env');
   }
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, { headers: { apikey: PUBLISHABLE_KEY } });
+  return { url: SUPABASE_URL, key: PUBLISHABLE_KEY };
+}
+
+async function get<T>(path: string): Promise<T> {
+  const { url, key } = config();
+  const res = await fetch(`${url}/rest/v1/${path}`, { headers: { apikey: key } });
   if (!res.ok) {
     throw new Error(`Supabase ${res.status}: ${await res.text()}`);
   }
   return res.json() as Promise<T>;
 }
 
-export function fetchSchools(): Promise<School[]> {
-  return get('schools?select=id,code,name,level,ward&active=eq.true&order=name');
+const PAGE = 1000; // Supabase returns at most 1000 rows per request
+
+/** Every public school (about 1,300), active ones included. */
+export async function fetchSchools(): Promise<School[]> {
+  const all: School[] = [];
+  for (let offset = 0; ; offset += PAGE) {
+    const rows = await get<School[]>(`schools?select=id,code,name,level,ward,active&order=name&limit=${PAGE}&offset=${offset}`);
+    all.push(...rows);
+    if (rows.length < PAGE) return all;
+  }
+}
+
+/** "Báo tôi khi có": records the request, returns how many devices asked for this school. */
+export async function requestSchool(deviceId: string, code: string): Promise<number> {
+  const { url, key } = config();
+  const res = await fetch(`${url}/rest/v1/rpc/request_school`, {
+    method: 'POST',
+    headers: { apikey: key, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ p_device: deviceId, p_code: code }),
+  });
+  if (!res.ok) throw new Error(`Supabase ${res.status}: ${await res.text()}`);
+  return res.json();
 }
 
 export function fetchMeals(schoolId: number, from: string, to: string): Promise<Meal[]> {

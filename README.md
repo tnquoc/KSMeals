@@ -49,6 +49,8 @@ Most public schools in HCMC run on the shared Quang Ich CMS at `<code>.hcm.edu.v
 | sync | `uv run python -m pipeline.sync` | School list → Supabase `schools` |
 | crawl | `uv run python -m pipeline.crawl --active-only` | New menu posts → Supabase `raw_posts` (pending) |
 | process | `uv run python -m pipeline.process` | Download images/PDF/Word/Excel, Gemini OCR, split into days → `menu_weeks`, `meals` |
+| nutrition | `uv run python -m pipeline.nutrition` | Estimated nutrition, AI note, allergens per meal and per dish |
+| demand | `uv run python -m pipeline.demand [--add]` | Schools parents asked for ("Báo tôi khi có"); `--add` tracks those whose sites post menus |
 
 All pipeline state lives in Supabase, so any run (local or GitHub Actions) resumes where the last
 one stopped, e.g. after the free Gemini quota runs out.
