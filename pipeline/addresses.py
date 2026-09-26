@@ -18,7 +18,7 @@ ADDRESS_RE = re.compile(
     r"Địa\s*chỉ\s*:?\s*(.{8,160}?)\s*(?=Điện\s*thoại|ĐT\b|Email|E-mail|Hotline|Fax|Website|©|Copyright|Số\s*điện|$)",
     re.I,
 )
-CITY_SUFFIX_RE = re.compile(r",?\s*(?:Thành\s*phố|TP\.?)\s*Hồ\s*Chí\s*Minh\.?\s*$", re.I)
+CITY_SUFFIX_RE = re.compile(r",?\s*(?:(?:Thành\s*phố|TP\.?)\s*Hồ\s*Chí\s*Minh|TP\.?\s*HCM|TPHCM)\.?\s*$", re.I)
 
 
 def parse_address(page: str) -> str | None:
