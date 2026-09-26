@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Screen } from '@/components/screen';
 import { ThemedText } from '@/components/themed-text';
@@ -25,16 +25,18 @@ const SECTIONS: { title: string; body: string[] }[] = [
   {
     title: 'Lưu trên thiết bị của bạn',
     body: [
-      'Trường đã chọn, danh sách dị ứng của con, các trường bạn đã bấm "Báo tôi khi có", và một mã thiết bị ẩn danh (chuỗi ngẫu nhiên, không gắn với danh tính).',
+      'Trường đã chọn, danh sách dị ứng của con, các trường bạn đã bấm "Báo tôi khi có", và một mã thiết bị.',
+      'Mã thiết bị là một chuỗi ngẫu nhiên do ứng dụng tự tạo ở lần mở đầu tiên. Mã không lấy từ số điện thoại, IMEI hay tài khoản nào, nên KSMeals không biết máy đó là của ai. Mã chỉ dùng để giới hạn số câu hỏi AI mỗi ngày và để biết một máy có quay lại dùng ứng dụng hay không.',
       'Những thông tin này bị xóa khi bạn gỡ ứng dụng hoặc xóa dữ liệu trình duyệt.',
     ],
   },
   {
     title: 'Gửi lên máy chủ',
     body: [
-      'Thống kê sử dụng: mã thiết bị ẩn danh, tên sự kiện (mở ứng dụng, xem ngày/tuần, chia sẻ, dùng trợ lý AI...), mã trường và hệ điều hành. Không kèm nội dung câu hỏi.',
+      'Thống kê sử dụng: mã thiết bị, tên sự kiện (mở ứng dụng, xem ngày/tuần, chia sẻ, dùng trợ lý AI...), mã trường và hệ điều hành. Không kèm nội dung câu hỏi.',
       'Khi dùng "Hỏi AI": câu hỏi, mã trường và các nhóm dị ứng bạn đã chọn được gửi tới máy chủ KSMeals (Supabase, Singapore) và Google Gemini để tạo câu trả lời. KSMeals không lưu nội dung câu hỏi, chỉ đếm số câu mỗi ngày để giới hạn. Google xử lý dữ liệu theo điều khoản Gemini API và có thể dùng dữ liệu gửi qua gói miễn phí để cải thiện sản phẩm. Vì vậy, đừng nhập tên hay thông tin cá nhân của con vào ô hỏi.',
-      'Khi bấm "Báo tôi khi có": mã thiết bị ẩn danh và mã trường.',
+      'Khi bấm "Báo tôi khi có": mã thiết bị và mã trường.',
+      'Như mọi trang web, các nhà cung cấp hạ tầng (GitHub Pages, Supabase) tự ghi địa chỉ IP và loại trình duyệt vào nhật ký máy chủ để vận hành và chống lạm dụng. KSMeals không lưu địa chỉ IP vào dữ liệu thống kê.',
     ],
   },
   {
@@ -56,13 +58,14 @@ const SECTIONS: { title: string; body: string[] }[] = [
   {
     title: 'Xóa dữ liệu, gỡ nội dung, liên hệ',
     body: [
-      'Để xóa dữ liệu trên máy chủ, gửi mã thiết bị bên dưới tới email liên hệ. Nhà trường hoặc phụ huynh muốn gỡ một thực đơn hay hình ảnh cũng liên hệ qua email này.',
+      'Để xóa dữ liệu trên máy chủ, bấm "Hiện mã thiết bị" bên dưới và gửi mã đó tới email liên hệ. Nhà trường hoặc phụ huynh muốn gỡ một thực đơn hay hình ảnh cũng liên hệ qua email này.',
     ],
   },
 ];
 
 export default function PrivacyScreen() {
   const [deviceId, setDeviceId] = useState('');
+  const [showId, setShowId] = useState(false);
   useEffect(() => {
     getDeviceId().then(setDeviceId);
   }, []);
@@ -82,9 +85,15 @@ export default function PrivacyScreen() {
       <View style={styles.section}>
         <ThemedText type="smallBold">Liên hệ</ThemedText>
         <ThemedText type="small">Email: {CONTACT_EMAIL || 'đang cập nhật'}</ThemedText>
-        <ThemedText type="small" themeColor="textSecondary" selectable>
-          Mã thiết bị của bạn: {deviceId || '…'}
-        </ThemedText>
+        {showId ? (
+          <ThemedText type="small" themeColor="textSecondary" selectable>
+            Mã thiết bị của bạn: {deviceId || '…'}
+          </ThemedText>
+        ) : (
+          <Pressable onPress={() => setShowId(true)} accessibilityRole="button">
+            <ThemedText type="linkPrimary">Hiện mã thiết bị</ThemedText>
+          </Pressable>
+        )}
       </View>
     </Screen>
   );
