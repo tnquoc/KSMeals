@@ -3,6 +3,7 @@ import json
 from datetime import date, timedelta
 from pathlib import Path
 
+from pipeline.addresses import parse_address
 from pipeline.allergens import detect
 from pipeline.crawl import parse_post
 from pipeline.dates import parse_slug_range, parse_title_range
@@ -173,6 +174,16 @@ def test_tray_photos_split_by_meal():
     assert {t["date"] for t in trays} == {"2026-09-21"}
     # "xe" must be a whole word: "xeo" or "sangtao" are not hints.
     assert tray_meal_type(base + "banh-xeo.jpg", None) == "lunch"
+
+
+def test_school_address_from_footer():
+    page = "<footer><p>Địa chỉ: 322 Nguyễn Trọng Tuyển, Phường Tân Sơn Hòa, Thành Phố Hồ Chí Minh</p>" \
+           "<p>Website: thlevansi.hcm.edu.vn</p><p>Điện thoại: 028 3844</p></footer>"
+    assert parse_address(page) == "322 Nguyễn Trọng Tuyển, Phường Tân Sơn Hòa"
+    two_campuses = "Địa chỉ: CS1: 98-100 Phạm Đình Hổ, Phường Bình Tây, TP. Hồ Chí Minh CS2: 9 Nguyễn Xuân Phụng"
+    assert parse_address(two_campuses) == "98-100 Phạm Đình Hổ, Phường Bình Tây"
+    assert parse_address("<p>Liên hệ nhà trường qua email</p>") is None
+    assert parse_address("Địa chỉ: đang cập nhật. Điện thoại: 0") is None
 
 
 def test_allergen_keywords():

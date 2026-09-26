@@ -115,11 +115,11 @@ export default function TodayScreen() {
               );
             })}
           </View>
-          {error ? <ThemedText style={{ color: theme.warn }}>Không tải được thực đơn: {error}</ThemedText> : null}
-          <DayMenu meals={meals.filter((m) => m.date === iso(selected))} sources={sources} />
           {meals.some((m) => m.date === iso(selected) && m.dishes.length) ? (
             <ShareButton school={school} day={selected} meals={meals.filter((m) => m.date === iso(selected))} />
           ) : null}
+          {error ? <ThemedText style={{ color: theme.warn }}>Không tải được thực đơn: {error}</ThemedText> : null}
+          <DayMenu meals={meals.filter((m) => m.date === iso(selected))} sources={sources} />
         </>
       )}
       <ThemedText type="small" themeColor="textSecondary">{DISCLAIMER}</ThemedText>

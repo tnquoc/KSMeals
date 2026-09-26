@@ -25,9 +25,9 @@ export function ShareButton({ school, day, meals }: { school: School; day: Date;
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
-      style={({ pressed }) => [styles.button, { backgroundColor: theme.accent, opacity: pressed ? 0.8 : 1 }]}>
-      <ThemedText type="smallBold" style={{ color: theme.onAccent }}>
-        {copied ? '✓ Đã sao chép, dán vào Zalo nhé' : '📤 Chia sẻ thực đơn cho phụ huynh khác'}
+      style={({ pressed }) => [styles.button, { borderColor: theme.accent, opacity: pressed ? 0.7 : 1 }]}>
+      <ThemedText type="smallBold" style={{ color: theme.accent }}>
+        {copied ? '✓ Đã sao chép, dán vào Zalo nhé' : '📤 Chia sẻ thực đơn ngày này'}
       </ThemedText>
     </Pressable>
   );
@@ -37,8 +37,9 @@ const styles = StyleSheet.create({
   button: {
     alignSelf: 'stretch',
     alignItems: 'center',
+    borderWidth: 1,
     borderRadius: 999,
-    paddingVertical: Spacing.two + 2,
+    paddingVertical: Spacing.two,
     paddingHorizontal: Spacing.three,
   },
 });

@@ -171,6 +171,7 @@ export default function SchoolScreen() {
                 <ThemedText type="small" themeColor="textSecondary">
                   {LEVEL[s.level] ?? s.level} · Chưa có thực đơn trên KSMeals
                 </ThemedText>
+                {s.address ? <ThemedText type="small" themeColor="textSecondary">📍 {s.address}</ThemedText> : null}
                 <RequestButton school={s} count={requested[s.code]} onDone={(n) => markRequested(s.code, n)} />
               </View>
             );
@@ -186,6 +187,7 @@ export default function SchoolScreen() {
               style={row}>
               <ThemedText type="smallBold">{s.name}</ThemedText>
               <ThemedText type="small" themeColor="textSecondary">{LEVEL[s.level] ?? s.level}</ThemedText>
+              {s.address ? <ThemedText type="small" themeColor="textSecondary">📍 {s.address}</ThemedText> : null}
             </Pressable>
           );
         })}

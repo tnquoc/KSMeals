@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { Pressable, StyleSheet } from 'react-native';
+import { Pressable, StyleSheet, Text } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
@@ -21,8 +21,10 @@ export function SchoolPill() {
         styles.pill,
         { borderColor: theme.accent, backgroundColor: theme.backgroundSelected, opacity: pressed ? 0.7 : 1 },
       ]}>
+      {/* Emoji in its own Text: mixed with words it sits on the text baseline and looks off-centre */}
+      <Text style={styles.emoji}>🏫</Text>
       <ThemedText type="small" numberOfLines={1} style={styles.name}>
-        🏫 {school.name}
+        {school.name}
       </ThemedText>
       <ThemedText type="smallBold" style={{ color: theme.accent }}>
         Đổi ›
@@ -44,5 +46,6 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.one + 2,
     marginTop: Spacing.two,
   },
-  name: { flexShrink: 1 },
+  emoji: { fontSize: 15, lineHeight: 20, marginRight: -Spacing.one },
+  name: { flexShrink: 1, lineHeight: 20 },
 });

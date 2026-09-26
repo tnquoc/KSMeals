@@ -16,6 +16,7 @@ export type School = {
   level: Level;
   ward: string;
   active: boolean; // has published menus in the app
+  address?: string | null; // from the school website footer (migration 0009)
 };
 
 export type Nutrition = {
@@ -66,14 +67,19 @@ async function get<T>(path: string): Promise<T> {
 
 const PAGE = 1000; // Supabase returns at most 1000 rows per request
 
-/** Every public school (about 1,300), active ones included. */
-export async function fetchSchools(): Promise<School[]> {
+async function fetchAllSchools(columns: string): Promise<School[]> {
   const all: School[] = [];
   for (let offset = 0; ; offset += PAGE) {
-    const rows = await get<School[]>(`schools?select=id,code,name,level,ward,active&order=name&limit=${PAGE}&offset=${offset}`);
+    const rows = await get<School[]>(`schools?select=${columns}&order=name&limit=${PAGE}&offset=${offset}`);
     all.push(...rows);
     if (rows.length < PAGE) return all;
   }
+}
+
+/** Every public school (about 1,300), active ones included. */
+export function fetchSchools(): Promise<School[]> {
+  // Without migration 0009 there is no address column: still list the schools.
+  return fetchAllSchools('id,code,name,level,ward,active,address').catch(() => fetchAllSchools('id,code,name,level,ward,active'));
 }
 
 export async function fetchSchoolByCode(code: string): Promise<School | null> {
