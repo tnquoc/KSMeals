@@ -120,7 +120,8 @@ Thư mục `app/`, Expo SDK 57 + Expo Router, TypeScript. Chạy: `cd app && npx
 - [x] "Báo tôi khi có": tìm được cả 1.293 trường; trường chưa có dữ liệu có nút 🔔, ghi qua hàm SQL `request_school` (migration 0007, app không ghi thẳng bảng nào), hiện số phụ huynh cùng yêu cầu. Xem nhu cầu: `uv run python -m pipeline.demand [--add]`
 - [ ] Nút chia sẻ thực đơn hôm nay dạng ảnh
 - [ ] Analytics (PostHog hoặc Firebase)
-- [ ] Icon, splash, tên hiển thị trên store
+- [x] Icon + màn hình khởi động (`scripts/make_icons.py build shield_steam`): bát cơm, lá, hơi nóng, khiên tick; icon iOS 1024, adaptive + monochrome Android, splash sáng/tối, favicon. Tên dưới icon "KSMeals"; tên trên store dự kiến "KSMeals – Thực đơn bán trú"
+- [ ] Dị ứng 2 mức: 🔴 "Có …" (tên món) và 🟠 "Thường có …" (công thức phổ biến), nguyên liệu theo từng món thay vì cả bữa
 
 ---
 
