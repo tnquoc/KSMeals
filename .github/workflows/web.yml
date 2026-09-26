@@ -41,6 +41,8 @@ jobs:
           EXPO_BASE_URL: /${{ github.event.repository.name }}
           EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+          # Public contact shown on /privacy; a repository *variable*, change it any time and re-run
+          EXPO_PUBLIC_CONTACT_EMAIL: ${{ vars.CONTACT_EMAIL }}
         run: |
           if [ -z "$EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY" ]; then
             echo "::error::Add the SUPABASE_PUBLISHABLE_KEY repository secret"; exit 1
