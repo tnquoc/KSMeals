@@ -9,7 +9,7 @@ import { Spacing } from '@/constants/theme';
 import { useMeals } from '@/hooks/use-meals';
 import { useTheme } from '@/hooks/use-theme';
 import { addDays, dayMonth, displayWeek, isSameDay, iso, mondayOf, weekDays, weekdayName } from '@/lib/dates';
-import { DISCLAIMER } from '@/lib/labels';
+import { allergyHits, DISCLAIMER } from '@/lib/labels';
 import { useSchool } from '@/lib/school-store';
 
 function NavButton({ label, onPress }: { label: string; onPress: () => void }) {
@@ -23,7 +23,7 @@ function NavButton({ label, onPress }: { label: string; onPress: () => void }) {
 
 export default function WeekScreen() {
   const theme = useTheme();
-  const { school, loaded } = useSchool();
+  const { school, loaded, allergies } = useSchool();
   const [today] = useState(() => new Date());
   const thisMonday = mondayOf(today);
   // null = automatic week (see displayWeek); set once the user navigates.
@@ -68,15 +68,20 @@ export default function WeekScreen() {
 
       {loading ? <ActivityIndicator style={styles.spinner} /> : null}
       {!loading &&
-        weekDays(monday).map((d) => (
-          <View key={iso(d)} style={styles.day}>
-            <ThemedText type="smallBold" style={isSameDay(d, today) ? { color: theme.accent } : undefined}>
-              {weekdayName(d)} {dayMonth(d)}
-              {isSameDay(d, today) ? ' · Hôm nay' : ''}
-            </ThemedText>
-            <DayMenu meals={meals.filter((m) => m.date === iso(d))} sources={sources} />
-          </View>
-        ))}
+        weekDays(monday).map((d) => {
+          const dayMeals = meals.filter((m) => m.date === iso(d));
+          const flagged = dayMeals.reduce((n, m) => n + allergyHits(m, allergies).count, 0);
+          return (
+            <View key={iso(d)} style={styles.day}>
+              <ThemedText type="smallBold" style={isSameDay(d, today) ? { color: theme.accent } : undefined}>
+                {weekdayName(d)} {dayMonth(d)}
+                {isSameDay(d, today) ? ' · Hôm nay' : ''}
+                {flagged ? <ThemedText type="smallBold" style={{ color: theme.danger }}>{`  ⛔ ${flagged} món cần chú ý`}</ThemedText> : null}
+              </ThemedText>
+              <DayMenu meals={dayMeals} sources={sources} />
+            </View>
+          );
+        })}
       <ThemedText type="small" themeColor="textSecondary">{DISCLAIMER}</ThemedText>
     </Screen>
   );

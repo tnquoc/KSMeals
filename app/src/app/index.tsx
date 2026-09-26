@@ -21,12 +21,12 @@ import {
   weekdayName,
   weekdayShort,
 } from '@/lib/dates';
-import { DISCLAIMER } from '@/lib/labels';
+import { allergyHits, DISCLAIMER } from '@/lib/labels';
 import { useSchool } from '@/lib/school-store';
 
 export default function TodayScreen() {
   const theme = useTheme();
-  const { school, loaded } = useSchool();
+  const { school, loaded, allergies } = useSchool();
   const [today] = useState(() => new Date());
   const thisMonday = mondayOf(today);
   // This week and next week in one request; which one to show depends on what is posted.
@@ -74,7 +74,9 @@ export default function TodayScreen() {
           <View style={styles.strip}>
             {days.map((d) => {
               const on = isSameDay(d, selected);
-              const hasMenu = meals.some((m) => m.date === iso(d) && (m.dishes.length || m.tray_image_urls.length));
+              const dayMeals = meals.filter((m) => m.date === iso(d));
+              const hasMenu = dayMeals.some((m) => m.dishes.length || m.tray_image_urls.length);
+              const warn = dayMeals.some((m) => allergyHits(m, allergies).count > 0);
               return (
                 <Pressable
                   key={iso(d)}
@@ -82,7 +84,11 @@ export default function TodayScreen() {
                   style={[styles.day, { backgroundColor: on ? theme.accent : theme.backgroundElement, borderColor: theme.border }]}>
                   <ThemedText type="smallBold" style={{ color: on ? theme.onAccent : theme.text }}>{weekdayShort(d)}</ThemedText>
                   <ThemedText type="small" style={{ color: on ? theme.onAccent : theme.textSecondary }}>{dayMonth(d)}</ThemedText>
-                  <View style={[styles.dot, { backgroundColor: hasMenu ? (on ? theme.onAccent : theme.accent) : 'transparent' }]} />
+                  {warn ? (
+                    <ThemedText style={styles.warn}>⚠️</ThemedText>
+                  ) : (
+                    <View style={[styles.dot, { backgroundColor: hasMenu ? (on ? theme.onAccent : theme.accent) : 'transparent' }]} />
+                  )}
                 </Pressable>
               );
             })}
@@ -108,5 +114,6 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   dot: { width: 5, height: 5, borderRadius: 3, marginTop: 2 },
+  warn: { fontSize: 10, lineHeight: 12 },
   spinner: { marginVertical: Spacing.five },
 });

@@ -1,5 +1,5 @@
 import { Tabs, TabList, TabTrigger, TabSlot, TabTriggerSlotProps, TabListProps } from 'expo-router/ui';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { ThemedText } from './themed-text';
 import { ThemedView } from './themed-view';
@@ -22,7 +22,7 @@ export default function AppTabs() {
             <TabButton>Hỏi AI</TabButton>
           </TabTrigger>
           <TabTrigger name="school" href="/school" asChild>
-            <TabButton>Trường</TabButton>
+            <TabButton>Hồ sơ</TabButton>
           </TabTrigger>
         </CustomTabList>
       </TabList>
@@ -43,12 +43,17 @@ export function TabButton({ children, isFocused, ...props }: TabTriggerSlotProps
 }
 
 export function CustomTabList(props: TabListProps) {
+  // Four tabs do not fit next to the brand on phone-width screens.
+  const { width } = useWindowDimensions();
+  const wide = width >= 520;
   return (
     <View {...props} style={styles.tabListContainer}>
-      <ThemedView type="backgroundElement" style={styles.innerContainer}>
-        <ThemedText type="smallBold" style={styles.brandText}>
-          KSMeals
-        </ThemedText>
+      <ThemedView type="backgroundElement" style={[styles.innerContainer, !wide && styles.innerNarrow]}>
+        {wide ? (
+          <ThemedText type="smallBold" style={styles.brandText}>
+            KSMeals
+          </ThemedText>
+        ) : null}
         {props.children}
       </ThemedView>
     </View>
@@ -76,6 +81,7 @@ const styles = StyleSheet.create({
     maxWidth: MaxContentWidth,
   },
   brandText: { marginRight: 'auto' },
+  innerNarrow: { justifyContent: 'space-between', paddingHorizontal: Spacing.two, gap: 0 },
   pressed: { opacity: 0.7 },
   tabButtonView: {
     paddingVertical: Spacing.one,

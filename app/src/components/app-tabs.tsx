@@ -28,8 +28,8 @@ export default function AppTabs() {
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="school">
-        <NativeTabs.Trigger.Label>Trường</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon sf="building.columns" md="school" />
+        <NativeTabs.Trigger.Label>Hồ sơ</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon sf="person.crop.circle" md="person" />
       </NativeTabs.Trigger>
     </NativeTabs>
   );

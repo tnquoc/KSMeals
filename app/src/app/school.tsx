@@ -7,7 +7,7 @@ import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { fetchSchools, type School } from '@/lib/api';
-import { LEVEL } from '@/lib/labels';
+import { ALLERGEN, LEVEL } from '@/lib/labels';
 import { useSchool } from '@/lib/school-store';
 
 // Search without diacritics too: "le van si" finds "Lê Văn Sĩ".
@@ -16,7 +16,7 @@ const fold = (s: string) =>
 
 export default function SchoolScreen() {
   const theme = useTheme();
-  const { school, setSchool } = useSchool();
+  const { school, setSchool, allergies, toggleAllergy } = useSchool();
   const [schools, setSchools] = useState<School[]>([]);
   const [query, setQuery] = useState('');
   const [refreshing, setRefreshing] = useState(false);
@@ -45,7 +45,37 @@ export default function SchoolScreen() {
 
   return (
     <Screen refreshing={refreshing} onRefresh={refresh}>
-      <ThemedText type="subtitle" style={styles.heading}>Chọn trường</ThemedText>
+      <ThemedText type="subtitle" style={styles.heading}>Hồ sơ của con</ThemedText>
+
+      <View style={styles.section}>
+        <ThemedText type="smallBold">Con dị ứng với</ThemedText>
+        <ThemedText type="small" themeColor="textSecondary">
+          Chọn để app tô đỏ những món có thể chứa các chất này. Chỉ lưu trên máy của bạn.
+        </ThemedText>
+        <View style={styles.allergyGrid}>
+          {Object.entries(ALLERGEN).map(([id, label]) => {
+            const on = allergies.includes(id);
+            return (
+              <Pressable
+                key={id}
+                onPress={() => toggleAllergy(id)}
+                accessibilityRole="checkbox"
+                accessibilityState={{ checked: on }}
+                style={[
+                  styles.allergy,
+                  { borderColor: on ? theme.danger : theme.border, backgroundColor: on ? theme.dangerSoft : theme.backgroundElement },
+                ]}>
+                <ThemedText type="smallBold" style={{ color: on ? theme.danger : theme.text }}>
+                  {on ? '✓ ' : ''}
+                  {label}
+                </ThemedText>
+              </Pressable>
+            );
+          })}
+        </View>
+      </View>
+
+      <ThemedText type="smallBold">Trường của con{school ? `: ${school.name}` : ''}</ThemedText>
       <TextInput
         value={query}
         onChangeText={setQuery}
@@ -84,6 +114,9 @@ export default function SchoolScreen() {
 
 const styles = StyleSheet.create({
   heading: { fontSize: 28, lineHeight: 36 },
+  section: { gap: Spacing.two },
+  allergyGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
+  allergy: { borderWidth: 1, borderRadius: 999, paddingHorizontal: Spacing.three, paddingVertical: Spacing.one + 2 },
   search: { borderWidth: StyleSheet.hairlineWidth, borderRadius: Spacing.three, paddingHorizontal: Spacing.three, paddingVertical: Spacing.two, fontSize: 16 },
   list: { gap: Spacing.two },
   row: { borderRadius: Spacing.three, borderWidth: StyleSheet.hairlineWidth, padding: Spacing.three, gap: 2 },

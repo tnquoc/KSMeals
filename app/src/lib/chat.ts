@@ -26,11 +26,12 @@ async function getDeviceId(): Promise<string> {
 export async function askAssistant(
   schoolId: number,
   messages: ChatMessage[],
+  allergies: string[] = [],
 ): Promise<{ reply: string; remaining?: number }> {
   const res = await fetch(`${SUPABASE_URL}/functions/v1/chat`, {
     method: 'POST',
     headers: { apikey: PUBLISHABLE_KEY, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ device_id: await getDeviceId(), school_id: schoolId, messages }),
+    body: JSON.stringify({ device_id: await getDeviceId(), school_id: schoolId, messages, allergies }),
   });
   const data = await res.json().catch(() => ({}));
   if (data.reply) return { reply: data.reply, remaining: data.remaining };

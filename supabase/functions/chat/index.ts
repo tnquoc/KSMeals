@@ -13,7 +13,9 @@ const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY")!;
 const LLM_BASE_URL = Deno.env.get("LLM_BASE_URL") ?? "https://generativelanguage.googleapis.com/v1beta/openai/";
 const LLM_MODEL = Deno.env.get("LLM_MODEL") ?? "gemini-3.5-flash-lite";
 
-const DAILY_LIMIT = 20; // messages per device per day
+// Messages per device per day. The chat shares the Gemini free-tier quota with the daily pipeline,
+// so keep it low until billing is on; change with `supabase secrets set CHAT_DAILY_LIMIT=...`.
+const DAILY_LIMIT = Number(Deno.env.get("CHAT_DAILY_LIMIT") ?? 20);
 const MAX_MESSAGE_CHARS = 500;
 const MAX_HISTORY = 8;
 
@@ -41,6 +43,7 @@ Quy tắc:
 - Không chẩn đoán hay khuyên điều trị; vấn đề sức khỏe thì khuyên hỏi bác sĩ.
 - Câu hỏi ngoài chủ đề bữa ăn của trẻ: từ chối nhẹ nhàng và gợi ý câu hỏi phù hợp.
 - Không nhận xét tiêu cực về nhà trường.
+- Ghi ngày dạng "Thứ Năm 24/9", không ghi năm.
 - Xưng "em", gọi người hỏi là "ba mẹ". Trả lời bằng tiếng Việt, thân thiện, ngắn gọn (tối đa khoảng 120 từ), dùng gạch đầu dòng khi liệt kê, không dùng bảng, không in đậm/in nghiêng.`;
 
 type Meal = {
@@ -93,10 +96,19 @@ async function consume(deviceId: string, today: string): Promise<number> {
   return DAILY_LIMIT - used - 1;
 }
 
-function menuContext(school: { name: string; level: string }, meals: Meal[], today: { iso: string; weekday: number }) {
+function menuContext(
+  school: { name: string; level: string },
+  meals: Meal[],
+  today: { iso: string; weekday: number },
+  allergies: string[],
+) {
   const lines = [
     `Trường: ${school.name} (${LEVEL[school.level] ?? school.level})`,
     `Hôm nay: ${WEEKDAY[today.weekday]} ${today.iso}`,
+    allergies.length
+      ? `Hồ sơ của con: dị ứng với ${allergies.map((a) => ALLERGEN[a]).join(", ")}. Khi trả lời về một ngày/bữa có món ` +
+        "nằm trong CHỈ MỤC DỊ ỨNG của các chất này, chủ động nhắc ba mẹ món đó."
+      : "Hồ sơ của con: chưa khai báo dị ứng.",
     "DỮ LIỆU THỰC ĐƠN (dinh dưỡng là ước tính cho một suất; [có thể chứa: ...] là nhãn dị ứng của từng món):",
   ];
   let lastDate = "";
@@ -142,13 +154,14 @@ Deno.serve(async (req) => {
   if (req.method !== "POST") return json({ error: "method not allowed" }, 405);
   if (!PUBLISHABLE_KEYS.includes(req.headers.get("apikey") ?? "")) return json({ error: "unauthorized" }, 401);
 
-  let body: { device_id?: string; school_id?: number; messages?: { role: string; content: string }[] };
+  let body: { device_id?: string; school_id?: number; messages?: { role: string; content: string }[]; allergies?: string[] };
   try {
     body = await req.json();
   } catch {
     return json({ error: "invalid json" }, 400);
   }
   const deviceId = body.device_id ?? "";
+  const allergies = (body.allergies ?? []).filter((a) => a in ALLERGEN);
   const schoolId = Number(body.school_id);
   const history = (body.messages ?? [])
     .filter((m) => (m.role === "user" || m.role === "assistant") && typeof m.content === "string")
@@ -181,7 +194,7 @@ Deno.serve(async (req) => {
         model: LLM_MODEL,
         temperature: 0.3,
         messages: [
-          { role: "system", content: `${SYSTEM_PROMPT}\n\n${menuContext(schools[0], meals, today)}` },
+          { role: "system", content: `${SYSTEM_PROMPT}\n\n${menuContext(schools[0], meals, today, allergies)}` },
           ...history,
         ],
       }),

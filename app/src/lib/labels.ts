@@ -47,6 +47,16 @@ export const ALLERGEN: Record<string, string> = {
   tree_nut: 'Hạt',
 };
 
+/** Allergens of a meal that match the child's profile, split by dish and hidden ingredients. */
+export function allergyHits(meal: { dishes: string[]; allergens: string[]; dish_allergens?: string[][] }, profile: string[]) {
+  const perDish = meal.dishes.map((_, i) => (meal.dish_allergens?.[i] ?? []).filter((a) => profile.includes(a)));
+  const inDishes = new Set(perDish.flat());
+  const hidden = meal.allergens.filter((a) => profile.includes(a) && !inDishes.has(a));
+  return { perDish, hidden, count: perDish.filter((h) => h.length).length + (hidden.length ? 1 : 0) };
+}
+
+export const allergenNames = (ids: string[]) => ids.map((a) => ALLERGEN[a] ?? a).join(', ');
+
 export const DISCLAIMER =
   'Dinh dưỡng là ước tính bằng AI cho một suất ăn thông thường theo độ tuổi. ' +
   'Nhãn vàng “Có thể chứa” là thành phần thường gây dị ứng, được dò theo tên món và nguyên liệu ' +

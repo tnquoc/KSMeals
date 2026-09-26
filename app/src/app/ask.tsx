@@ -52,7 +52,7 @@ export default function AskScreen() {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const keyboard = useKeyboardVisible();
-  const { school, loaded } = useSchool();
+  const { school, loaded, allergies } = useSchool();
   const [chats, setChats] = useState<Record<number, ChatMessage[]>>({});
   const [input, setInput] = useState('');
   const [busy, setBusy] = useState(false);
@@ -78,7 +78,7 @@ export default function AskScreen() {
     setInput('');
     setBusy(true);
     try {
-      const { reply, remaining: left } = await askAssistant(school.id, next);
+      const { reply, remaining: left } = await askAssistant(school.id, next, allergies);
       setChats((c) => ({ ...c, [school.id]: [...next, { role: 'assistant', content: reply }] }));
       if (left != null) setRemaining(left);
     } catch {

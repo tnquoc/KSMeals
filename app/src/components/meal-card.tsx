@@ -7,11 +7,14 @@ import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import type { Meal } from '@/lib/api';
-import { ALLERGEN, COURSE, COURSE_ICON, MEAL } from '@/lib/labels';
+import { ALLERGEN, allergenNames, allergyHits, COURSE, COURSE_ICON, MEAL } from '@/lib/labels';
+import { useSchool } from '@/lib/school-store';
 
 export function MealCard({ meal }: { meal: Meal }) {
   const theme = useTheme();
+  const { allergies } = useSchool();
   const n = meal.nutrition;
+  const hits = allergyHits(meal, allergies);
 
   return (
     <ThemedView type="backgroundElement" style={[styles.card, { borderColor: theme.border }]}>
@@ -19,19 +22,35 @@ export function MealCard({ meal }: { meal: Meal }) {
         {MEAL[meal.meal_type] ?? meal.meal_type}
       </ThemedText>
 
-      {meal.dishes.map((dish, i) => (
-        <View key={`${dish}-${i}`} style={styles.dish}>
-          <ThemedText style={styles.icon}>{COURSE_ICON[meal.courses[i]] ?? COURSE_ICON.other}</ThemedText>
-          <View style={styles.dishText}>
-            <ThemedText style={styles.dishName}>{dish}</ThemedText>
-            {COURSE[meal.courses[i]] ? (
-              <ThemedText type="small" themeColor="textSecondary" style={styles.course}>
-                {COURSE[meal.courses[i]]}
-              </ThemedText>
-            ) : null}
+      {meal.dishes.map((dish, i) => {
+        const danger = hits.perDish[i];
+        return (
+          <View
+            key={`${dish}-${i}`}
+            style={[styles.dish, danger.length ? [styles.dangerDish, { backgroundColor: theme.dangerSoft, borderColor: theme.danger }] : null]}>
+            <ThemedText style={styles.icon}>{COURSE_ICON[meal.courses[i]] ?? COURSE_ICON.other}</ThemedText>
+            <View style={styles.dishText}>
+              <ThemedText style={[styles.dishName, danger.length ? { color: theme.danger, fontWeight: 700 } : null]}>{dish}</ThemedText>
+              {danger.length ? (
+                <ThemedText type="smallBold" style={[styles.course, { color: theme.danger }]}>
+                  ⛔ Có thể chứa {allergenNames(danger)}
+                </ThemedText>
+              ) : COURSE[meal.courses[i]] ? (
+                <ThemedText type="small" themeColor="textSecondary" style={styles.course}>
+                  {COURSE[meal.courses[i]]}
+                </ThemedText>
+              ) : null}
+            </View>
           </View>
+        );
+      })}
+      {hits.hidden.length ? (
+        <View style={[styles.hidden, { backgroundColor: theme.dangerSoft, borderColor: theme.danger }]}>
+          <ThemedText type="smallBold" style={{ color: theme.danger }}>
+            ⛔ Bữa này có thể có {allergenNames(hits.hidden)} trong nguyên liệu (không rõ món nào)
+          </ThemedText>
         </View>
-      ))}
+      ) : null}
       {!meal.dishes.length ? (
         <ThemedText type="small" themeColor="textSecondary">Trường chỉ đăng ảnh, chưa có thực đơn dạng chữ.</ThemedText>
       ) : null}
@@ -108,6 +127,19 @@ const styles = StyleSheet.create({
   },
   dishName: {
     lineHeight: 22,
+  },
+  dangerDish: {
+    borderLeftWidth: 3,
+    borderRadius: Spacing.two,
+    marginHorizontal: -Spacing.two,
+    paddingHorizontal: Spacing.two - 3,
+    paddingVertical: Spacing.one,
+  },
+  hidden: {
+    borderLeftWidth: 3,
+    borderRadius: Spacing.two,
+    padding: Spacing.two,
+    marginTop: Spacing.one,
   },
   course: {
     fontSize: 12,
