@@ -4,7 +4,7 @@
 
 **Mục tiêu v1:** app iOS + Android cho phụ huynh TP.HCM xem thực đơn bán trú của trường con, có dinh dưỡng ước tính bằng AI và một chatbot nhỏ. Mục đích là trả lời một câu hỏi: **phụ huynh có mở app đều đặn không?**
 
-**Đang ở:** 👉 Phase 3/4: xong chatbot, hồ sơ dị ứng, "báo tôi khi có". Tiếp: chia sẻ thực đơn, icon/branding; thông báo buổi sáng để cuối.
+**Đang ở:** 👉 Bản web đã online (tnquoc.github.io/KSMeals). Tiếp: đo lường người dùng, chia sẻ thực đơn, dị ứng 2 mức; store + thông báo khi có nhu cầu thật.
 
 ---
 
@@ -118,6 +118,7 @@ Thư mục `app/`, Expo SDK 57 + Expo Router, TypeScript. Chạy: `cd app && npx
 - [x] Hồ sơ dị ứng của con (tab "Hồ sơ"): chọn 10 nhóm dị ứng, lưu trên máy; món trùng được tô đỏ "⛔ Có thể chứa…", thành phần ẩn cảnh báo riêng; thanh ngày hiện ⚠️, tab Cả tuần ghi "⛔ N món cần chú ý"; chatbot nhận hồ sơ và chủ động nhắc
 - [ ] Push thông báo buổi sáng (Expo Notifications, cần development build)
 - [x] "Báo tôi khi có": tìm được cả 1.293 trường; trường chưa có dữ liệu có nút 🔔, ghi qua hàm SQL `request_school` (migration 0007, app không ghi thẳng bảng nào), hiện số phụ huynh cùng yêu cầu. Xem nhu cầu: `uv run python -m pipeline.demand [--add]`
+- [x] **Bản web công khai (miễn phí): https://tnquoc.github.io/KSMeals/** — `.github/workflows/web.yml` build Expo web tĩnh (base `/KSMeals`) và đăng GitHub Pages mỗi khi `app/` thay đổi; "Thêm vào màn hình chính" có icon + manifest. Dùng để kiểm chứng nhu cầu trước khi trả phí store
 - [ ] Nút chia sẻ thực đơn hôm nay dạng ảnh
 - [ ] Analytics (PostHog hoặc Firebase)
 - [x] Icon + màn hình khởi động (`scripts/make_icons.py build shield_steam`): bát cơm, lá, hơi nóng, khiên tick; icon iOS 1024, adaptive + monochrome Android, splash sáng/tối, favicon. Tên dưới icon "KSMeals"; tên trên store dự kiến "KSMeals – Thực đơn bán trú"
