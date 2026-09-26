@@ -18,6 +18,9 @@ export default function AppTabs() {
           <TabTrigger name="week" href="/week" asChild>
             <TabButton>Cả tuần</TabButton>
           </TabTrigger>
+          <TabTrigger name="ask" href="/ask" asChild>
+            <TabButton>Hỏi AI</TabButton>
+          </TabTrigger>
           <TabTrigger name="school" href="/school" asChild>
             <TabButton>Trường</TabButton>
           </TabTrigger>

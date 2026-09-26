@@ -77,7 +77,8 @@ def estimate(client, level: str, meals: list[dict]) -> list[dict]:
 def to_row(meal: dict, est: dict | None) -> dict:
     """Values to store. Allergens come from keywords on dish names + suggested ingredients."""
     ingredients = [i.strip().lower() for i in (est or {}).get("ingredients", []) if i.strip()]
-    row = {"ingredients": ingredients, "allergens": detect(meal["dishes"] + ingredients)}
+    row = {"ingredients": ingredients, "allergens": detect(meal["dishes"] + ingredients),
+           "dish_allergens": [detect([d]) for d in meal["dishes"]]}
     kcal = (est or {}).get("kcal")
     if est and kcal and KCAL_RANGE[0] <= kcal <= KCAL_RANGE[1]:
         row["nutrition"] = {k: round(float(est[k]), 1) for k in ("kcal", "protein_g", "fat_g", "carbs_g")}

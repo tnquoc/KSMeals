@@ -11,10 +11,11 @@ KEYWORDS: dict[str, list[str]] = {
     "crustacean": ["tôm", "cua", "ghẹ", "tép", "tôm khô"],
     "mollusc": ["mực", "bạch tuộc", "nghêu", "ngao", "sò", "sò điệp", "hến", "ốc", "hàu", "trai"],
     "fish": ["cá", "chả cá", "nước mắm", "cá cơm"],
-    "egg": ["trứng", "trứng cút", "flan", "bánh flan", "mayonnaise", "sốt mayonnaise"],
+    "egg": ["trứng", "trứng cút", "flan", "bánh flan", "bánh plan", "kem plan", "mayonnaise", "sốt mayonnaise"],
     "milk": ["sữa", "sữa chua", "yaourt", "yogurt", "phô mai", "phomai", "bơ sữa", "kem", "váng sữa",
              # brand names that are milk products without the word "sữa"
-             "yakult", "dielac", "probi", "susu", "nuvi", "fristi", "milo", "ovaltine", "grow plus"],
+             "yakult", "dielac", "probi", "susu", "nuvi", "fristi", "milo", "ovaltine", "grow plus",
+             "flan", "bánh flan", "bánh plan", "kem plan"],  # custard: egg and milk
     "peanut": ["đậu phộng", "lạc"],
     "soy": ["đậu nành", "đậu hũ", "đậu phụ", "tàu hũ", "tàu hủ", "đậu hủ", "nước tương", "xì dầu"],
     "gluten": ["bánh mì", "mì", "nui", "mì ý", "bột mì", "bánh bao", "bánh bông lan", "bánh quy",

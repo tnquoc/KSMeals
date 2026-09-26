@@ -22,6 +22,11 @@ export default function AppTabs() {
         <NativeTabs.Trigger.Icon sf="calendar" md="calendar_month" />
       </NativeTabs.Trigger>
 
+      <NativeTabs.Trigger name="ask">
+        <NativeTabs.Trigger.Label>Hỏi AI</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon sf="bubble.left.and.bubble.right" md="chat" />
+      </NativeTabs.Trigger>
+
       <NativeTabs.Trigger name="school">
         <NativeTabs.Trigger.Label>Trường</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon sf="building.columns" md="school" />

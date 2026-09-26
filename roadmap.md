@@ -4,7 +4,7 @@
 
 **Mục tiêu v1:** app iOS + Android cho phụ huynh TP.HCM xem thực đơn bán trú của trường con, có dinh dưỡng ước tính bằng AI và một chatbot nhỏ. Mục đích là trả lời một câu hỏi: **phụ huynh có mở app đều đặn không?**
 
-**Đang ở:** 👉 Phase 3: app chạy trên iPhone; dữ liệu mở rộng lên **72 trường** trong 7 phường (`data/tracked_schools.txt`). Tiếp: push buổi sáng + "báo tôi khi có" (cần EAS build, tài khoản Apple Developer).
+**Đang ở:** ✅ Phase 4 chatbot xong. 👉 Tiếp: hồ sơ dị ứng của con (tô đỏ món), "báo tôi khi có trường", chia sẻ thực đơn, icon/branding; thông báo buổi sáng để cuối.
 
 ---
 
@@ -16,7 +16,7 @@
 | 1 | Pipeline: crawl → OCR → tách ngày → database | 1,5–2 tuần | ✅ Xong (19 trường; mở rộng khi sẵn sàng) |
 | 2 | Trang web xem và duyệt dữ liệu | 2–3 ngày | ✅ Xong |
 | 3 | App Expo: chọn trường, thực đơn, dinh dưỡng, push | 2 tuần | 👉 Tiếp theo |
-| 4 | Chatbot | 1 tuần | ⏳ |
+| 4 | Chatbot | 1 tuần | ✅ Xong |
 | 5 | Hoàn thiện và nộp store | 1 tuần (+ ~2 tuần Google closed testing) | ⏳ |
 | 6 | Ra mắt và đo lường | 4–6 tuần sau ra mắt | ⏳ |
 
@@ -131,14 +131,16 @@ Thư mục `app/`, Expo SDK 57 + Expo Router, TypeScript. Chạy: `cd app && npx
 
 ---
 
-## Phase 4: Chatbot
+## Phase 4: Chatbot ✅
 
-- [ ] Supabase Edge Function giữ API key; app không bao giờ chứa key
-- [ ] Đưa thẳng thực đơn 1–2 tuần của trường vào prompt (chưa cần RAG)
-- [ ] Giới hạn khoảng 20 tin/ngày/thiết bị
-- [ ] Câu hỏi gợi ý: "Hôm nay con ăn gì?", "Tối nay nên nấu gì để bù bữa trưa?", "Món này có tôm/đậu phộng không?"
-- [ ] Quy tắc: chỉ trả lời về bữa ăn của trường đã chọn; không có dữ liệu thì nói không biết; câu về dị ứng thì nêu nguyên liệu tìm thấy, nhắc xác nhận lại với trường, không bao giờ khẳng định "an toàn"
-- [ ] Bộ 20 câu hỏi test
+- [x] Supabase Edge Function `supabase/functions/chat` giữ key Gemini (secret), app gọi bằng publishable key (function tự kiểm tra key; tắt verify_jwt vì key mới không phải JWT)
+- [x] Context: thực đơn 3 tuần (tuần trước → tuần sau) của trường đã chọn đưa thẳng vào prompt, không cần RAG/LangChain
+- [x] Giới hạn 20 tin/ngày/thiết bị (`devices`, `chat_usage`), ID ẩn danh lưu trên máy
+- [x] Tab "Hỏi AI" trong app: câu hỏi gợi ý, khung chat, số câu còn lại, lưu ý AI có thể sai
+- [x] Dị ứng: nhãn **theo từng món** (`meals.dish_allergens`, migration 0006) + **chỉ mục dị ứng do code tính** đưa vào context → model chỉ chép lại. Kiểm tra với dữ liệu thật: khớp 100% (trước đó model lite gán nhầm món)
+- [x] Quy tắc: chỉ nói theo dữ liệu, không đoán; dị ứng luôn nhắc xác nhận với trường, không nói "an toàn"; từ chối câu ngoài chủ đề; xưng "em", gọi "ba mẹ"
+- Deploy: `npx supabase@2.118.0 functions deploy chat --project-ref <ref> --no-verify-jwt --use-api` (cần `SUPABASE_ACCESS_TOKEN` trong `.env`, token giới hạn quyền, hết hạn sau 90 ngày)
+- Để sau: stream câu trả lời; tool calling cho câu hỏi cần đếm/tính chính xác trên nhiều tháng
 
 ---
 

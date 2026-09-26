@@ -1,0 +1,6 @@
+# Supabase CLI config (CLI pinned: npx supabase@2.118.0 ...).
+project_id = "ksmeals"
+
+[functions.chat]
+# The app sends the publishable key, which is not a JWT; the function checks it itself.
+verify_jwt = false

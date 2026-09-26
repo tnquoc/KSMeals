@@ -186,7 +186,8 @@ def test_allergen_keywords():
         "Mì gạo xào": [],                           # rice noodles, no gluten
         "Miến gà": [],
         "Hủ tíu mì gà": ["gluten"],
-        "Bánh flan": ["egg"],
+        "Bánh flan": ["egg", "milk"],
+        "Bánh plan": ["egg", "milk"],               # common misspelling
         "Chả mực hấp mỡ hành": ["mollusc"],
         "Rau muống trộn mè rang": ["sesame"],
         "Tương ớt": [],
