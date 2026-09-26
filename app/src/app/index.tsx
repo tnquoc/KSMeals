@@ -1,9 +1,10 @@
-import { router } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
 import { DayMenu } from '@/components/day-menu';
 import { NoSchool } from '@/components/no-school';
+import { PageHeader } from '@/components/page-header';
+import { SchoolPill } from '@/components/school-pill';
 import { Screen } from '@/components/screen';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
@@ -50,17 +51,17 @@ export default function TodayScreen() {
 
   return (
     <Screen refreshing={refreshing} onRefresh={reload}>
-      <View>
-        <ThemedText type="subtitle" style={styles.heading}>
-          {heading}{' '}
-          <ThemedText type="subtitle" themeColor="textSecondary" style={styles.heading}>
-            {dayMonth(selected)}
-          </ThemedText>
-        </ThemedText>
-        <Pressable onPress={() => router.navigate('/school')}>
-          <ThemedText type="small" themeColor="textSecondary">{school.name} · Đổi trường</ThemedText>
-        </Pressable>
-      </View>
+      <PageHeader
+        title={
+          <>
+            {heading}{' '}
+            <ThemedText type="subtitle" themeColor="textSecondary" style={styles.heading}>
+              {dayMonth(selected)}
+            </ThemedText>
+          </>
+        }>
+        <SchoolPill />
+      </PageHeader>
 
       {loading ? (
         <ActivityIndicator style={styles.spinner} />

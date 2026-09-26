@@ -3,6 +3,8 @@ import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
 import { DayMenu } from '@/components/day-menu';
 import { NoSchool } from '@/components/no-school';
+import { PageHeader } from '@/components/page-header';
+import { SchoolPill } from '@/components/school-pill';
 import { Screen } from '@/components/screen';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
@@ -46,10 +48,9 @@ export default function WeekScreen() {
 
   return (
     <Screen refreshing={refreshing} onRefresh={reload}>
-      <View>
-        <ThemedText type="subtitle" style={styles.heading}>Cả tuần</ThemedText>
-        <ThemedText type="small" themeColor="textSecondary">{school.name}</ThemedText>
-      </View>
+      <PageHeader title="Cả tuần">
+        <SchoolPill />
+      </PageHeader>
 
       <View style={styles.navRow}>
         <NavButton label="‹ Tuần trước" onPress={() => setChosen(addDays(monday, -7))} />
@@ -88,7 +89,6 @@ export default function WeekScreen() {
 }
 
 const styles = StyleSheet.create({
-  heading: { fontSize: 28, lineHeight: 36 },
   navRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
   nav: { borderRadius: 999, borderWidth: StyleSheet.hairlineWidth, paddingHorizontal: Spacing.three, paddingVertical: Spacing.one },
   range: { flex: 1, textAlign: 'center' },

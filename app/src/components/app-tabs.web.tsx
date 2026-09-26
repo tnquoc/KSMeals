@@ -2,6 +2,7 @@ import { Tabs, TabList, TabTrigger, TabSlot, TabTriggerSlotProps, TabListProps }
 import { useSyncExternalStore } from 'react';
 import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 
+import { Logo } from './logo';
 import { ThemedText } from './themed-text';
 import { ThemedView } from './themed-view';
 
@@ -54,11 +55,10 @@ export function CustomTabList(props: TabListProps) {
   return (
     <View {...props} style={styles.tabListContainer}>
       <ThemedView type="backgroundElement" style={[styles.innerContainer, !wide && styles.innerNarrow]}>
-        {wide ? (
-          <ThemedText type="smallBold" style={styles.brandText}>
-            KSMeals
-          </ThemedText>
-        ) : null}
+        <View style={[styles.brand, wide && styles.brandWide]}>
+          <Logo size={28} />
+          {wide ? <ThemedText type="smallBold">KSMeals</ThemedText> : null}
+        </View>
         {props.children}
       </ThemedView>
     </View>
@@ -85,7 +85,8 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
     maxWidth: MaxContentWidth,
   },
-  brandText: { marginRight: 'auto' },
+  brand: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
+  brandWide: { marginRight: 'auto' },
   innerNarrow: { justifyContent: 'space-between', paddingHorizontal: Spacing.two, gap: 0 },
   pressed: { opacity: 0.7 },
   tabButtonView: {

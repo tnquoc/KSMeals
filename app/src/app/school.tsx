@@ -3,6 +3,7 @@ import { router } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from 'react-native';
 
+import { PageHeader } from '@/components/page-header';
 import { Screen } from '@/components/screen';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
@@ -106,7 +107,7 @@ export default function SchoolScreen() {
 
   return (
     <Screen refreshing={refreshing} onRefresh={refresh}>
-      <ThemedText type="subtitle" style={styles.heading}>Hồ sơ của con</ThemedText>
+      <PageHeader title="Hồ sơ của con" />
 
       <View style={styles.section}>
         <ThemedText type="smallBold">Con dị ứng với</ThemedText>
@@ -191,7 +192,6 @@ export default function SchoolScreen() {
 }
 
 const styles = StyleSheet.create({
-  heading: { fontSize: 28, lineHeight: 36 },
   section: { gap: Spacing.two },
   allergyGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
   allergy: { borderWidth: 1, borderRadius: 999, paddingHorizontal: Spacing.three, paddingVertical: Spacing.one + 2 },

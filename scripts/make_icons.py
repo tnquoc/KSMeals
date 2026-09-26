@@ -159,6 +159,7 @@ def build(variant: str):
     padded(mark(variant, color=WHITE), 0.72).save(OUT / "android-icon-monochrome.png")
     padded(art, 1.0).save(OUT / "splash-icon.png")
     icon(variant, 48).save(OUT / "favicon.png")
+    icon(variant, 128).save(OUT / "logo.png")  # in-app header and web tab bar
     # Web app (GitHub Pages): home-screen icons and the manifest's icons
     public = ROOT / "app" / "public"
     icon(variant, 180).save(public / "apple-touch-icon.png")

@@ -13,6 +13,8 @@ import {
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { NoSchool } from '@/components/no-school';
+import { PageHeader } from '@/components/page-header';
+import { SchoolPill } from '@/components/school-pill';
 import { Screen } from '@/components/screen';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -100,12 +102,10 @@ export default function AskScreen() {
             contentContainerStyle={styles.content}
             onContentSizeChange={() => scroll.current?.scrollToEnd({ animated: true })}
             keyboardShouldPersistTaps="handled">
-            <View>
-              <ThemedText type="subtitle" style={styles.heading}>Hỏi AI</ThemedText>
-              <ThemedText type="small" themeColor="textSecondary">
-                Về thực đơn của {school.name}
-              </ThemedText>
-            </View>
+            <PageHeader title="Hỏi AI">
+              <ThemedText type="small" themeColor="textSecondary">Hỏi về thực đơn của trường:</ThemedText>
+              <SchoolPill />
+            </PageHeader>
 
             {!messages.length ? (
               <View style={styles.suggestions}>
@@ -189,7 +189,6 @@ const styles = StyleSheet.create({
     maxWidth: MaxContentWidth,
     alignSelf: 'center',
   },
-  heading: { fontSize: 28, lineHeight: 36 },
   suggestions: { gap: Spacing.two, marginTop: Spacing.two },
   suggestion: {
     borderWidth: StyleSheet.hairlineWidth,
