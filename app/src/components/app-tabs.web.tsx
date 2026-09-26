@@ -1,4 +1,5 @@
 import { Tabs, TabList, TabTrigger, TabSlot, TabTriggerSlotProps, TabListProps } from 'expo-router/ui';
+import { useSyncExternalStore } from 'react';
 import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { ThemedText } from './themed-text';
@@ -42,10 +43,14 @@ export function TabButton({ children, isFocused, ...props }: TabTriggerSlotProps
   );
 }
 
+const noopSubscribe = () => () => {};
+
 export function CustomTabList(props: TabListProps) {
-  // Four tabs do not fit next to the brand on phone-width screens.
+  // Four tabs do not fit next to the brand on phone-width screens. The static HTML is rendered
+  // without a window, so use the narrow layout until hydrated to avoid a hydration mismatch.
   const { width } = useWindowDimensions();
-  const wide = width >= 520;
+  const hydrated = useSyncExternalStore(noopSubscribe, () => true, () => false);
+  const wide = hydrated && width >= 520;
   return (
     <View {...props} style={styles.tabListContainer}>
       <ThemedView type="backgroundElement" style={[styles.innerContainer, !wide && styles.innerNarrow]}>

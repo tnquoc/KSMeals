@@ -159,6 +159,14 @@ def build(variant: str):
     padded(mark(variant, color=WHITE), 0.72).save(OUT / "android-icon-monochrome.png")
     padded(art, 1.0).save(OUT / "splash-icon.png")
     icon(variant, 48).save(OUT / "favicon.png")
+    # Web app (GitHub Pages): home-screen icons and the manifest's icons
+    public = ROOT / "app" / "public"
+    icon(variant, 180).save(public / "apple-touch-icon.png")
+    icon(variant, 192).save(public / "icon-192.png")
+    icon(variant, 512).save(public / "icon-512.png")
+    maskable = Image.new("RGBA", (1024, 1024), BRAND_GREEN)
+    maskable.alpha_composite(padded(art, 0.72))  # same safe zone as the Android adaptive icon
+    maskable.resize((512, 512), Image.LANCZOS).convert("RGB").save(public / "icon-maskable-512.png")
     print("wrote", ", ".join(p.name for p in sorted(OUT.glob("*.png"))))
 
 
