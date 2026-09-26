@@ -55,6 +55,11 @@ For each meal you get the dish names. Return, per meal:
   covers (tinh bột, đạm, rau củ, trái cây, sữa) and, if relevant, which one is light or missing.
   Good: "Bữa trưa đủ tinh bột, đạm từ cá và thịt, có rau và trái cây."
   Good: "Bữa xế chủ yếu tinh bột và sữa, ít rau."
+  Good: "Bữa xế chỉ có sữa chua uống: sữa và đường, không có tinh bột, không có rau."
+  Name each light or missing group on its own ("không có rau, ít tinh bột"). Never write
+  "ít X và Y": parents read it as "a little X and Y".
+  Tinh bột means rice, noodles, bread, cake flour. Sweetened milk, yogurt, juice and sweets give
+  đường, not tinh bột: say so, since the carbs number includes sugar.
   Bad (never do this): praising taste or freshness ("thơm ngon", "tươi ngon"), health claims
   ("tốt cho tiêu hóa", "giàu sắt", "tăng đề kháng"), criticising the school, medical advice,
   or saying a dish is safe for allergies.
