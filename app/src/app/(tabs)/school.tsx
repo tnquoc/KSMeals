@@ -21,7 +21,7 @@ const MAX_RESULTS = 40;
 // Street address when we have one, otherwise the ward: parents still see where the school is.
 const place = (s: School) => s.address || WARD_NAME[s.ward];
 
-const FIRST_LIST = 20; // covered schools shown before the parent types anything
+const FIRST_LIST = 10; // covered schools shown before the parent types anything
 const MAX_CUSTOM_ALLERGIES = 5;
 
 const RESET_TITLE = 'Xóa dữ liệu trên máy này?';
@@ -55,12 +55,12 @@ function ClearButton({ onPress }: { onPress: () => void }) {
 }
 
 /** Section heading on a tinted band, so the two parts of the profile stand out. */
-function SectionTitle({ icon, children }: { icon: string; children: string }) {
+function SectionTitle({ icon, tone = 'accent', children }: { icon: string; tone?: 'accent' | 'warn'; children: string }) {
   const theme = useTheme();
   return (
-    <View style={[styles.sectionTitle, { backgroundColor: theme.backgroundSelected }]}>
+    <View style={[styles.sectionTitle, { backgroundColor: tone === 'warn' ? theme.warnSoft : theme.backgroundSelected }]}>
       <ThemedText style={styles.sectionIcon}>{icon}</ThemedText>
-      <ThemedText style={[styles.sectionText, { color: theme.accent }]}>{children}</ThemedText>
+      <ThemedText style={[styles.sectionText, { color: tone === 'warn' ? theme.warn : theme.accent }]}>{children}</ThemedText>
     </View>
   );
 }
@@ -109,8 +109,10 @@ export default function SchoolScreen() {
   const { school, setSchool, allergies, toggleAllergy, resetAll } = useSchool();
   const [schools, setSchools] = useState<School[]>([]);
   const [requested, setRequested] = useState<Record<string, number>>({});
-  // null: the box shows the chosen school's name; ✕ or typing turns it into a search.
-  const [query, setQuery] = useState<string | null>(null);
+  const [query, setQuery] = useState('');
+  // With a school chosen, the search and the list stay closed until "Đổi trường".
+  const [picking, setPicking] = useState(false);
+  const [editingAllergies, setEditingAllergies] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [otherAllergy, setOtherAllergy] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -147,8 +149,8 @@ export default function SchoolScreen() {
   const activeCount = schools.filter((s) => s.active).length;
   // The saved school may predate newer fields (address): prefer the fresh directory row.
   const current = school ? (schools.find((s) => s.id === school.id) ?? school) : null;
-  const q = fold((query ?? '').trim());
-  const boxText = query ?? current?.name ?? '';
+  const q = fold(query.trim());
+  const showPicker = !current || picking;
   const shown = useMemo(() => {
     if (!q) {
       // A short first list, schools in the same ward as the current one first; typing finds the rest.
@@ -162,155 +164,210 @@ export default function SchoolScreen() {
   }, [schools, q, school, current?.ward]);
 
   const custom = allergies.filter(isCustomAllergy);
+  const allergyNames = allergies.map((a) => ALLERGEN[a] ?? a).join(' · ');
   const addOther = () => {
     const term = otherAllergy.trim().replace(/\s+/g, ' ').slice(0, 30);
     if (term && !allergies.some((a) => a.toLowerCase() === term.toLowerCase())) toggleAllergy(term);
     setOtherAllergy('');
   };
 
+  const chooseSchool = (s: School) => {
+    setSchool(s);
+    setQuery('');
+    setPicking(false);
+    track('school_selected', s.code);
+    router.navigate('/');
+  };
+
   return (
     <Screen refreshing={refreshing} onRefresh={refresh}>
       <PageHeader title="Hồ sơ của con" />
 
-      <ReminderCard />
-
-      <View style={styles.section}>
-        <SectionTitle icon="🛡️">Con dị ứng với</SectionTitle>
-        <ThemedText type="small" themeColor="textSecondary">
-          Chọn để app tô đỏ những món mà con có thể bị dị ứng. Chỉ lưu trên máy của bạn.
-        </ThemedText>
-        <View style={styles.allergyGrid}>
-          {Object.entries(ALLERGEN).map(([id, label]) => {
-            const on = allergies.includes(id);
-            return (
-              <Pressable
-                key={id}
-                onPress={() => toggleAllergy(id)}
-                accessibilityRole="checkbox"
-                accessibilityState={{ checked: on }}
-                style={[
-                  styles.allergy,
-                  { borderColor: on ? theme.danger : theme.border, backgroundColor: on ? theme.dangerSoft : theme.backgroundElement },
-                ]}>
-                <ThemedText type="smallBold" style={{ color: on ? theme.danger : theme.text }}>
-                  {on ? '✓ ' : ''}
-                  {label}
-                </ThemedText>
-              </Pressable>
-            );
-          })}
-          {custom.map((term) => (
-            <Pressable
-              key={term}
-              onPress={() => toggleAllergy(term)}
-              accessibilityRole="button"
-              accessibilityLabel={`Bỏ ${term}`}
-              style={[styles.allergy, { borderColor: theme.danger, backgroundColor: theme.dangerSoft }]}>
-              <ThemedText type="smallBold" style={{ color: theme.danger }}>✓ {term}  ✕</ThemedText>
-            </Pressable>
-          ))}
-        </View>
-        {custom.length < MAX_CUSTOM_ALLERGIES ? (
-          <View style={styles.otherRow}>
-            <View style={styles.otherBox}>
-              <TextInput
-                value={otherAllergy}
-                onChangeText={setOtherAllergy}
-                onSubmitEditing={addOther}
-                placeholder="Khác, ví dụ: thịt vịt, kiwi…"
-                placeholderTextColor={theme.textSecondary}
-                returnKeyType="done"
-                maxLength={30}
-                style={[styles.other, { color: theme.text, borderColor: theme.border, backgroundColor: theme.backgroundElement }]}
-              />
-              {otherAllergy ? <ClearButton onPress={() => setOtherAllergy('')} /> : null}
-            </View>
-            <Pressable
-              onPress={addOther}
-              disabled={!otherAllergy.trim()}
-              accessibilityRole="button"
-              style={[styles.add, { backgroundColor: theme.accent, opacity: otherAllergy.trim() ? 1 : 0.4 }]}>
-              <ThemedText type="smallBold" style={{ color: theme.onAccent }}>Thêm</ThemedText>
-            </Pressable>
-          </View>
-        ) : null}
-        {custom.length ? (
-          <ThemedText type="small" themeColor="textSecondary">
-            Mục tự thêm được dò theo tên món và nguyên liệu thường dùng, nên có thể sót. Hãy xác nhận với nhà trường.
-          </ThemedText>
-        ) : null}
-      </View>
-
       <View style={styles.section}>
         <SectionTitle icon="🏫">Trường của con</SectionTitle>
-        {current ? (
+        {current && !picking ? (
           <View style={[styles.current, { borderColor: theme.accent, backgroundColor: theme.backgroundSelected }]}>
-            <ThemedText type="smallBold">✓ {current.name}</ThemedText>
-            <ThemedText type="small" themeColor="textSecondary">{LEVEL[current.level] ?? current.level}</ThemedText>
-            {place(current) ? <ThemedText type="small" themeColor="textSecondary">📍 {place(current)}</ThemedText> : null}
+            <View style={styles.currentText}>
+              <ThemedText type="smallBold">{current.name}</ThemedText>
+              <ThemedText type="small" themeColor="textSecondary">{LEVEL[current.level] ?? current.level}</ThemedText>
+              {place(current) ? <ThemedText type="small" themeColor="textSecondary">📍 {place(current)}</ThemedText> : null}
+            </View>
+            <Pressable
+              onPress={() => setPicking(true)}
+              accessibilityRole="button"
+              style={[styles.change, { borderColor: theme.accent, backgroundColor: theme.backgroundElement }]}>
+              <ThemedText type="smallBold" style={{ color: theme.accent }}>Đổi trường</ThemedText>
+            </Pressable>
           </View>
         ) : null}
-        <View>
-          <TextInput
-            value={boxText}
-            onChangeText={setQuery}
-            placeholder="Tìm trường của con…"
-            placeholderTextColor={theme.textSecondary}
-            autoCorrect={false}
-            selectTextOnFocus={query === null}
-            style={[styles.search, { color: theme.text, borderColor: theme.border, backgroundColor: theme.backgroundElement }]}
-          />
-          {boxText ? (
-            <ClearButton onPress={() => setQuery('')} />
-          ) : null}
-        </View>
+        {showPicker ? (
+          <View>
+            <TextInput
+              value={query}
+              onChangeText={setQuery}
+              placeholder="Tìm trường của con…"
+              placeholderTextColor={theme.textSecondary}
+              autoCorrect={false}
+              autoFocus={picking}
+              style={[styles.search, { color: theme.text, borderColor: theme.border, backgroundColor: theme.backgroundElement }]}
+            />
+            {query ? <ClearButton onPress={() => setQuery('')} /> : null}
+          </View>
+        ) : null}
       </View>
-      {error ? <ThemedText style={{ color: theme.warn }}>Không tải được danh sách trường: {error}</ThemedText> : null}
-      {!q && schools.length ? (
-        <ThemedText type="small" themeColor="textSecondary">
-          {activeCount} trường đang có thực đơn{shown.length < activeCount - (school ? 1 : 0) ? `, đang hiện ${shown.length} trường` : ''}.
-          Không thấy trường của con? Gõ tên để tìm trong {schools.length} trường.
-        </ThemedText>
-      ) : null}
-      {q && !shown.length && schools.length ? (
-        <ThemedText type="small" themeColor="textSecondary">
-          Không tìm thấy trường nào. KSMeals hiện có các trường công lập trên hệ thống website của Sở GD&ĐT TP.HCM.
-        </ThemedText>
+
+      {showPicker ? (
+        <>
+          {error ? <ThemedText style={{ color: theme.warn }}>Không tải được danh sách trường: {error}</ThemedText> : null}
+          {!q && schools.length ? (
+            <ThemedText type="small" themeColor="textSecondary">
+              {activeCount} trường đang có thực đơn{shown.length < activeCount - (school ? 1 : 0) ? `, đang hiện ${shown.length} trường` : ''}.
+              Không thấy trường của con? Gõ tên để tìm trong {schools.length} trường.
+            </ThemedText>
+          ) : null}
+          {q && !shown.length && schools.length ? (
+            <ThemedText type="small" themeColor="textSecondary">
+              Không tìm thấy trường nào. KSMeals hiện có các trường công lập trên hệ thống website của Sở GD&ĐT TP.HCM.
+            </ThemedText>
+          ) : null}
+          {picking ? (
+            <Pressable
+              onPress={() => {
+                setPicking(false);
+                setQuery('');
+              }}
+              accessibilityRole="button">
+              <ThemedText type="linkPrimary">Giữ trường hiện tại</ThemedText>
+            </Pressable>
+          ) : null}
+
+          <View style={styles.list}>
+            {shown.map((s) => {
+              const row = [styles.row, { backgroundColor: theme.backgroundElement, borderColor: theme.border }];
+              if (!s.active) {
+                return (
+                  <View key={s.id} style={row}>
+                    <ThemedText type="smallBold">{s.name}</ThemedText>
+                    <ThemedText type="small" themeColor="textSecondary">
+                      {LEVEL[s.level] ?? s.level} · Chưa có thực đơn trên KSMeals
+                    </ThemedText>
+                    {place(s) ? <ThemedText type="small" themeColor="textSecondary">📍 {place(s)}</ThemedText> : null}
+                    <RequestButton school={s} count={requested[s.code]} onDone={(n) => markRequested(s.code, n)} />
+                  </View>
+                );
+              }
+              return (
+                <Pressable key={s.id} onPress={() => chooseSchool(s)} style={row}>
+                  <ThemedText type="smallBold">{s.name}</ThemedText>
+                  <ThemedText type="small" themeColor="textSecondary">{LEVEL[s.level] ?? s.level}</ThemedText>
+                  {place(s) ? <ThemedText type="small" themeColor="textSecondary">📍 {place(s)}</ThemedText> : null}
+                </Pressable>
+              );
+            })}
+          </View>
+        </>
       ) : null}
 
-      <View style={styles.list}>
-        {shown.map((s) => {
-          const on = s.id === school?.id;
-          const row = [styles.row, { backgroundColor: on ? theme.backgroundSelected : theme.backgroundElement, borderColor: theme.border }];
-          if (!s.active) {
-            return (
-              <View key={s.id} style={row}>
-                <ThemedText type="smallBold">{s.name}</ThemedText>
-                <ThemedText type="small" themeColor="textSecondary">
-                  {LEVEL[s.level] ?? s.level} · Chưa có thực đơn trên KSMeals
-                </ThemedText>
-                {place(s) ? <ThemedText type="small" themeColor="textSecondary">📍 {place(s)}</ThemedText> : null}
-                <RequestButton school={s} count={requested[s.code]} onDone={(n) => markRequested(s.code, n)} />
-              </View>
-            );
-          }
-          return (
+      <ReminderCard />
+
+      {current ? (
+        <View style={styles.section}>
+          <SectionTitle icon="🛡️" tone="warn">Con dị ứng với</SectionTitle>
+          {!editingAllergies ? (
             <Pressable
-              key={s.id}
-              onPress={() => {
-                setSchool(s);
-                setQuery(null);
-                track('school_selected', s.code);
-                router.navigate('/');
-              }}
-              style={row}>
-              <ThemedText type="smallBold">{s.name}</ThemedText>
-              <ThemedText type="small" themeColor="textSecondary">{LEVEL[s.level] ?? s.level}</ThemedText>
-              {place(s) ? <ThemedText type="small" themeColor="textSecondary">📍 {place(s)}</ThemedText> : null}
+              onPress={() => setEditingAllergies(true)}
+              accessibilityRole="button"
+              style={[styles.summary, { borderColor: theme.border, backgroundColor: theme.backgroundElement }]}>
+              <View style={styles.currentText}>
+                <ThemedText type="smallBold" style={allergies.length ? { color: theme.danger } : undefined}>
+                  {allergies.length ? allergyNames : 'Chưa chọn'}
+                </ThemedText>
+                <ThemedText type="small" themeColor="textSecondary">
+                  {allergies.length
+                    ? 'App tô đỏ những món có thể gây dị ứng cho con.'
+                    : 'Chọn nếu con bị dị ứng, app sẽ tô đỏ món cần chú ý.'}
+                </ThemedText>
+              </View>
+              <ThemedText type="linkPrimary">{allergies.length ? 'Sửa' : 'Thêm'}</ThemedText>
             </Pressable>
-          );
-        })}
-      </View>
+          ) : (
+            <>
+              <ThemedText type="small" themeColor="textSecondary">
+                Chọn để app tô đỏ những món mà con có thể bị dị ứng. Chỉ lưu trên máy của bạn.
+              </ThemedText>
+              <View style={styles.allergyGrid}>
+                {Object.entries(ALLERGEN).map(([id, label]) => {
+                  const on = allergies.includes(id);
+                  return (
+                    <Pressable
+                      key={id}
+                      onPress={() => toggleAllergy(id)}
+                      accessibilityRole="checkbox"
+                      accessibilityState={{ checked: on }}
+                      style={[
+                        styles.allergy,
+                        { borderColor: on ? theme.danger : theme.border, backgroundColor: on ? theme.dangerSoft : theme.backgroundElement },
+                      ]}>
+                      <ThemedText type="smallBold" style={{ color: on ? theme.danger : theme.text }}>
+                        {on ? '✓ ' : ''}
+                        {label}
+                      </ThemedText>
+                    </Pressable>
+                  );
+                })}
+                {custom.map((term) => (
+                  <Pressable
+                    key={term}
+                    onPress={() => toggleAllergy(term)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Bỏ ${term}`}
+                    style={[styles.allergy, { borderColor: theme.danger, backgroundColor: theme.dangerSoft }]}>
+                    <ThemedText type="smallBold" style={{ color: theme.danger }}>✓ {term}  ✕</ThemedText>
+                  </Pressable>
+                ))}
+              </View>
+              {custom.length < MAX_CUSTOM_ALLERGIES ? (
+                <View style={styles.otherRow}>
+                  <View style={styles.otherBox}>
+                    <TextInput
+                      value={otherAllergy}
+                      onChangeText={setOtherAllergy}
+                      onSubmitEditing={addOther}
+                      placeholder="Khác, ví dụ: thịt vịt, kiwi…"
+                      placeholderTextColor={theme.textSecondary}
+                      returnKeyType="done"
+                      maxLength={30}
+                      style={[styles.other, { color: theme.text, borderColor: theme.border, backgroundColor: theme.backgroundElement }]}
+                    />
+                    {otherAllergy ? <ClearButton onPress={() => setOtherAllergy('')} /> : null}
+                  </View>
+                  <Pressable
+                    onPress={addOther}
+                    disabled={!otherAllergy.trim()}
+                    accessibilityRole="button"
+                    style={[styles.add, { backgroundColor: theme.accent, opacity: otherAllergy.trim() ? 1 : 0.4 }]}>
+                    <ThemedText type="smallBold" style={{ color: theme.onAccent }}>Thêm</ThemedText>
+                  </Pressable>
+                </View>
+              ) : null}
+              {custom.length ? (
+                <ThemedText type="small" themeColor="textSecondary">
+                  Mục tự thêm được dò theo tên món và nguyên liệu thường dùng, nên có thể sót. Hãy xác nhận với nhà trường.
+                </ThemedText>
+              ) : null}
+              <Pressable
+                onPress={() => {
+                  addOther();
+                  setEditingAllergies(false);
+                }}
+                accessibilityRole="button"
+                style={[styles.done, { backgroundColor: theme.accent }]}>
+                <ThemedText type="smallBold" style={{ color: theme.onAccent }}>Xong</ThemedText>
+              </Pressable>
+            </>
+          )}
+        </View>
+      ) : null}
 
       <View style={[styles.about, { borderTopColor: theme.border }]}>
         <ThemedText type="small" themeColor="textSecondary">
@@ -325,7 +382,9 @@ export default function SchoolScreen() {
             if (!(await confirmReset())) return;
             await resetAll();
             setRequested({});
-            setQuery(null);
+            setQuery('');
+            setPicking(false);
+            setEditingAllergies(false);
             setOtherAllergy('');
             router.navigate('/');
           }}
@@ -360,7 +419,25 @@ const styles = StyleSheet.create({
     fontSize: 15,
   },
   add: { borderRadius: 999, paddingHorizontal: Spacing.three, paddingVertical: Spacing.two },
-  current: { borderWidth: 1, borderRadius: Spacing.three, padding: Spacing.three, gap: 2 },
+  current: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.three,
+    borderWidth: 1,
+    borderRadius: Spacing.three,
+    padding: Spacing.three,
+  },
+  currentText: { flex: 1, gap: 2 },
+  change: { borderWidth: 1, borderRadius: 999, paddingHorizontal: Spacing.three, paddingVertical: Spacing.one + 2 },
+  summary: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.three,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: Spacing.three,
+    padding: Spacing.three,
+  },
+  done: { alignSelf: 'flex-start', borderRadius: 999, paddingHorizontal: Spacing.four, paddingVertical: Spacing.two },
   clear: {
     position: 'absolute',
     right: Spacing.two + 2,
