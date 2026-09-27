@@ -5,4 +5,4 @@ export const WEB_URL = (process.env.EXPO_PUBLIC_WEB_URL ?? 'https://tnquoc.githu
 // Public contact for privacy requests and takedowns (required by the app stores).
 export const CONTACT_EMAIL = process.env.EXPO_PUBLIC_CONTACT_EMAIL ?? '';
 
-export const PRIVACY_UPDATED = '26/09/2026';
+export const PRIVACY_UPDATED = '27/09/2026';

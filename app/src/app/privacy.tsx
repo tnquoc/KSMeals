@@ -27,7 +27,7 @@ const SECTIONS: { title: string; body: string[] }[] = [
     body: [
       'Trường đã chọn, danh sách dị ứng của con, các trường bạn đã bấm "Báo tôi khi có", và một mã thiết bị.',
       'Mã thiết bị là một chuỗi ngẫu nhiên do ứng dụng tự tạo ở lần mở đầu tiên. Mã không lấy từ số điện thoại, IMEI hay tài khoản nào, nên KSMeals không biết máy đó là của ai. Mã chỉ dùng để giới hạn số câu hỏi AI mỗi ngày và để biết một máy có quay lại dùng ứng dụng hay không.',
-      'Những thông tin này bị xóa khi bạn gỡ ứng dụng hoặc xóa dữ liệu trình duyệt.',
+      'Những thông tin này bị xóa khi bạn bấm "Xóa dữ liệu trên máy này" ở tab Hồ sơ, gỡ ứng dụng hoặc xóa dữ liệu trình duyệt.',
     ],
   },
   {
@@ -58,7 +58,7 @@ const SECTIONS: { title: string; body: string[] }[] = [
   {
     title: 'Xóa dữ liệu, gỡ nội dung, liên hệ',
     body: [
-      'Để xóa dữ liệu trên máy chủ, bấm "Hiện mã thiết bị" bên dưới và gửi mã đó tới email liên hệ. Nhà trường hoặc phụ huynh muốn gỡ một thực đơn hay hình ảnh cũng liên hệ qua email này.',
+      'Để xóa dữ liệu trên máy chủ, bấm "Hiện mã thiết bị" bên dưới và gửi mã đó tới email liên hệ (làm việc này trước khi xóa dữ liệu trên máy, vì sau đó mã thiết bị sẽ đổi). Nhà trường hoặc phụ huynh muốn gỡ một thực đơn hay hình ảnh cũng liên hệ qua email này.',
     ],
   },
 ];

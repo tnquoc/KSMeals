@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Link, router } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { ActivityIndicator, Alert, Platform, Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import { PageHeader } from '@/components/page-header';
 import { Screen } from '@/components/screen';
@@ -22,6 +22,21 @@ const place = (s: School) => s.address || WARD_NAME[s.ward];
 
 const FIRST_LIST = 20; // covered schools shown before the parent types anything
 const MAX_CUSTOM_ALLERGIES = 5;
+
+const RESET_TITLE = 'Xóa dữ liệu trên máy này?';
+const RESET_MESSAGE =
+  'Trường đã chọn, danh sách dị ứng và mã thiết bị sẽ bị xóa, ứng dụng trở về như lúc mới cài. Không thể hoàn tác.';
+
+/** Asks before wiping local data (Alert has no buttons on web, so the browser's confirm there). */
+function confirmReset(): Promise<boolean> {
+  if (Platform.OS === 'web') return Promise.resolve(window.confirm(`${RESET_TITLE}\n\n${RESET_MESSAGE}`));
+  return new Promise((resolve) =>
+    Alert.alert(RESET_TITLE, RESET_MESSAGE, [
+      { text: 'Hủy', style: 'cancel', onPress: () => resolve(false) },
+      { text: 'Xóa', style: 'destructive', onPress: () => resolve(true) },
+    ], { cancelable: true, onDismiss: () => resolve(false) }),
+  );
+}
 
 /** ✕ inside the right end of a text box; the box needs right padding for it. */
 function ClearButton({ onPress }: { onPress: () => void }) {
@@ -302,22 +317,18 @@ export default function SchoolScreen() {
         <Link href="/privacy">
           <ThemedText type="linkPrimary">Chính sách quyền riêng tư ›</ThemedText>
         </Link>
-        {__DEV__ ? (
-          // Development builds only (Expo Go): start over as a brand-new user, e.g. to record a demo.
-          <Pressable
-            onPress={async () => {
-              await resetAll();
-              setRequested({});
-              setQuery(null);
-              setOtherAllergy('');
-              router.navigate('/');
-            }}
-            accessibilityRole="button">
-            <ThemedText type="small" style={{ color: theme.danger }}>
-              [Dev] Xóa dữ liệu trên máy, mở lại như người dùng mới
-            </ThemedText>
-          </Pressable>
-        ) : null}
+        <Pressable
+          onPress={async () => {
+            if (!(await confirmReset())) return;
+            await resetAll();
+            setRequested({});
+            setQuery(null);
+            setOtherAllergy('');
+            router.navigate('/');
+          }}
+          accessibilityRole="button">
+          <ThemedText type="small" style={{ color: theme.danger }}>Xóa dữ liệu trên máy này</ThemedText>
+        </Pressable>
       </View>
     </Screen>
   );
