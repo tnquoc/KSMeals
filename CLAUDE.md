@@ -27,7 +27,8 @@ Plan and progress: `roadmap.md`. Setup and commands: `README.md`. App-specific r
 - Keys: `.env` (GEMINI_API_KEY, SUPABASE_URL, SUPABASE_SECRET_KEY, SUPABASE_PUBLISHABLE_KEY, SUPABASE_ACCESS_TOKEN, VAPID_PRIVATE_KEY/VAPID_PUBLIC_KEY) never committed; `app/.env.local` holds the public values, the VAPID public key is in `app/src/lib/app-info.ts`. GitHub: secrets GEMINI_API_KEY, SUPABASE_URL, SUPABASE_SECRET_KEY, SUPABASE_PUBLISHABLE_KEY, VAPID_PRIVATE_KEY; variable CONTACT_EMAIL.
 
 ## Next up (see roadmap.md)
-1. Owner shares the web link with parents in the 7 tracked wards; after 1–2 weeks read `pipeline.stats` (key metric: devices active 3+ days/week).
-2. Google Play first (USD 25): EAS build + morning push notifications. Apple later.
-3. Allergy 2 levels (red "Có" from dish names vs orange "Thường có" from recipes, per-dish ingredients) — postponed by the owner.
-4. Nhà trẻ/mẫu giáo variants; tray photos with children's faces are not blurred (owner's decision).
+1. First YouTube Short is live (channel @KSMeals); read `pipeline.stats` weekly (key metric: devices active 3+ days/week; dev builds and automated browsers are no longer tracked, events before 2026-09-28 include Claude's test sessions).
+2. Google Play: personal account created, waiting for identity verification; then choose the package name, Expo account, EAS build, closed testing (12 testers × 14 days, via a self-join Google Group). Apple later.
+3. Google Search Console verified for https://tnquoc.github.io/KSMeals/; sitemap.xml to submit. A short domain (ksmeals.vn) would help: links in Shorts aren't clickable.
+4. Allergy 2 levels (red "Có" from dish names vs orange "Thường có" from recipes, per-dish ingredients) — postponed by the owner.
+5. Nhà trẻ/mẫu giáo variants; tray photos with children's faces are not blurred (owner's decision).
