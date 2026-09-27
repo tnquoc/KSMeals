@@ -46,7 +46,7 @@ Quy tắc:
 - Trường: mặc định trả lời theo TRƯỜNG ĐANG CHỌN của ba mẹ. Nếu ba mẹ hỏi về một trường có trong mục TRƯỜNG KHÁC thì trả lời theo dữ liệu trường đó (ghi rõ tên trường) và được so sánh các trường. Nếu hỏi về trường không có dữ liệu bên dưới: nói em chưa có thực đơn trường đó trong câu hỏi này, mời ba mẹ gõ đầy đủ tên trường (ví dụ "Tiểu học Phan Chu Trinh"), hoặc đổi trường ở tab Hồ sơ; nếu trường chưa có trên KSMeals thì bấm "Báo tôi khi có" ở tab Hồ sơ. Không nói là em chỉ biết một trường.
 - Câu hỏi ngoài chủ đề bữa ăn của trẻ: từ chối nhẹ nhàng và gợi ý câu hỏi phù hợp.
 - Không nhận xét tiêu cực về nhà trường.
-- Ghi ngày dạng "Thứ Năm 24/9", không ghi năm.
+- Ghi ngày dạng "Thứ Năm 24/9", không ghi năm. Câu hỏi theo tuần ("tuần này", "tuần sau"): chỉ dùng các ngày có nhãn đúng tuần đó trong dữ liệu và nói rõ khoảng ngày (ví dụ "tuần 21/9–25/9").
 - Xưng "em", gọi người hỏi là "ba mẹ". Trả lời bằng tiếng Việt, thân thiện, ngắn gọn (tối đa khoảng 120 từ), dùng gạch đầu dòng khi liệt kê, không dùng bảng, không in đậm/in nghiêng.`;
 
 type Meal = {
@@ -117,6 +117,17 @@ function shift(iso: string, days: number): string {
   return d.toISOString().slice(0, 10);
 }
 
+/** Monday of the week containing today (Sunday belongs to the week that just ended). */
+const mondayOf = (today: { iso: string; weekday: number }) => shift(today.iso, -((today.weekday + 6) % 7));
+
+/** "2026-09-21" -> "21/9" */
+const dm = (iso: string) => `${Number(iso.slice(8, 10))}/${Number(iso.slice(5, 7))}`;
+
+function weekLabel(iso: string, monday: string): string {
+  const weeks = Math.floor((Date.parse(iso) - Date.parse(monday)) / (7 * 86400000));
+  return weeks === 0 ? "tuần này" : weeks === -1 ? "tuần trước" : weeks === 1 ? "tuần sau" : `${weeks > 0 ? "sau" : "trước"} ${Math.abs(weeks)} tuần`;
+}
+
 /** Count this message against the device's daily limit; returns messages left after it, or -1 if over. */
 async function consume(deviceId: string, today: string): Promise<number> {
   await db("devices?on_conflict=id", {
@@ -136,7 +147,7 @@ async function consume(deviceId: string, today: string): Promise<number> {
 }
 
 /** Menus and the allergen index of one school. Custom terms (typed by the parent) are matched here, in code. */
-function schoolContext(school: School, meals: Meal[], custom: string[]) {
+function schoolContext(school: School, meals: Meal[], custom: string[], monday: string) {
   const lines = [
     `Trường: ${school.name} (${LEVEL[school.level] ?? school.level})`,
     "DỮ LIỆU THỰC ĐƠN (dinh dưỡng là ước tính cho một suất; [có thể chứa: ...] là nhãn dị ứng của từng món):",
@@ -146,7 +157,7 @@ function schoolContext(school: School, meals: Meal[], custom: string[]) {
     if (!m.dishes.length) continue;
     if (m.date !== lastDate) {
       lastDate = m.date;
-      lines.push(`\n${WEEKDAY[new Date(`${m.date}T00:00:00Z`).getUTCDay()]} ${m.date}:`);
+      lines.push(`\n${WEEKDAY[new Date(`${m.date}T00:00:00Z`).getUTCDay()]} ${m.date} (${weekLabel(m.date, monday)}):`);
     }
     const names = (ids: string[]) => ids.map((a) => ALLERGEN[a] ?? a).join(", ");
     const dishes = m.dishes.map((d, i) => {
@@ -194,16 +205,26 @@ function menuContext(
   custom: string[],
 ) {
   const profile = [...allergies.map((a) => ALLERGEN[a]), ...custom];
+  const monday = mondayOf(today);
+  const range = (offset: number) => `${dm(shift(monday, 7 * offset))}–${dm(shift(monday, 7 * offset + 4))}`;
+  const weekend = today.weekday === 0 || today.weekday === 6;
   const parts = [
     `Hôm nay: ${WEEKDAY[today.weekday]} ${today.iso}`,
+    // The model can't work out weeks from bare dates reliably (it once answered "tuần này" with 14/9-18/9).
+    `Các tuần: tuần trước = ${range(-1)}; tuần này = ${range(0)}; tuần sau (tuần tới) = ${range(1)}.` +
+      (weekend
+        ? ` Hôm nay là cuối tuần, trường nghỉ: "tuần này" là tuần ${range(0)} vừa học xong; nếu ba mẹ hỏi món sắp tới thì dùng tuần sau ${range(1)}.`
+        : ""),
     profile.length
       ? `Hồ sơ của con: dị ứng với ${profile.join(", ")}. Khi trả lời về một ngày/bữa có món ` +
         "nằm trong CHỈ MỤC DỊ ỨNG của các chất này, chủ động nhắc ba mẹ món đó."
       : "Hồ sơ của con: chưa khai báo dị ứng.",
-    `\n=== TRƯỜNG ĐANG CHỌN ===\n${schoolContext(chosen, meals.filter((m) => m.school_id === chosen.id), custom)}`,
+    `\n=== TRƯỜNG ĐANG CHỌN ===\n${schoolContext(chosen, meals.filter((m) => m.school_id === chosen.id), custom, monday)}`,
   ];
   for (const s of others) {
-    parts.push(`\n=== TRƯỜNG KHÁC (ba mẹ nhắc tới) ===\n${schoolContext(s, meals.filter((m) => m.school_id === s.id), custom)}`);
+    parts.push(
+      `\n=== TRƯỜNG KHÁC (ba mẹ nhắc tới) ===\n${schoolContext(s, meals.filter((m) => m.school_id === s.id), custom, monday)}`,
+    );
   }
   return parts.join("\n");
 }
@@ -250,7 +271,7 @@ Deno.serve(async (req) => {
     const others = mentionedSchools(history.filter((m) => m.role === "user").map((m) => m.content), schools, schoolId);
     const ids = [chosen, ...others].map((s) => s.id).join(",");
     // Last week to next week around today.
-    const monday = shift(today.iso, -((today.weekday + 6) % 7));
+    const monday = mondayOf(today);
     const meals = await db(
       `meals?select=school_id,date,meal_type,dishes,allergens,dish_allergens,ingredients,nutrition,ai_note&school_id=in.(${ids})` +
         `&status=eq.published&date=gte.${shift(monday, -7)}&date=lte.${shift(monday, 11)}&order=date`,
