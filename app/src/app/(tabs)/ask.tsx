@@ -66,7 +66,7 @@ export default function AskScreen() {
   if (!school) {
     return (
       <Screen>
-        <NoSchool />
+        <NoSchool message="Chọn trường của con để hỏi trợ lý AI về thực đơn, dinh dưỡng và các món có thể gây dị ứng." />
       </Screen>
     );
   }

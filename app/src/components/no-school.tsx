@@ -6,13 +6,15 @@ import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
-export function NoSchool() {
+const DEFAULT_MESSAGE = 'Chọn trường để xem thực đơn bán trú mỗi ngày, kèm dinh dưỡng ước tính và nhãn dị ứng.';
+
+export function NoSchool({ message = DEFAULT_MESSAGE }: { message?: string }) {
   const theme = useTheme();
   return (
     <ThemedView type="backgroundElement" style={styles.box}>
       <ThemedText type="subtitle" style={styles.title}>Con bạn học trường nào?</ThemedText>
       <ThemedText themeColor="textSecondary" style={styles.center}>
-        Chọn trường để xem thực đơn bán trú mỗi ngày, kèm dinh dưỡng ước tính và nhãn dị ứng.
+        {message}
       </ThemedText>
       <Pressable
         onPress={() => router.navigate('/school')}
