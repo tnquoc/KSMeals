@@ -11,15 +11,13 @@ import { useTheme } from '@/hooks/use-theme';
 import { track } from '@/lib/analytics';
 import { fetchSchools, requestSchool, type School } from '@/lib/api';
 import { getDeviceId } from '@/lib/device';
-import { ALLERGEN, LEVEL } from '@/lib/labels';
+import { ALLERGEN, fold, isCustomAllergy, LEVEL } from '@/lib/labels';
 import { useSchool } from '@/lib/school-store';
 
 const REQUESTED_KEY = 'ksmeals.requested'; // school code -> number of parents who asked (at request time)
 const MAX_RESULTS = 40;
-
-// Search without diacritics too: "le van si" finds "Lê Văn Sĩ".
-const fold = (s: string) =>
-  s.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase();
+const FIRST_LIST = 20; // covered schools shown before the parent types anything
+const MAX_CUSTOM_ALLERGIES = 5;
 
 /** Section heading on a tinted band, so the two parts of the profile stand out. */
 function SectionTitle({ icon, children }: { icon: string; children: string }) {
@@ -76,9 +74,10 @@ export default function SchoolScreen() {
   const { school, setSchool, allergies, toggleAllergy } = useSchool();
   const [schools, setSchools] = useState<School[]>([]);
   const [requested, setRequested] = useState<Record<string, number>>({});
-  const [query, setQuery] = useState('');
+  // null: the box shows the chosen school's name; ✕ or typing turns it into a search.
+  const [query, setQuery] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
-  const [browsing, setBrowsing] = useState(false); // list every covered school without searching
+  const [otherAllergy, setOtherAllergy] = useState('');
   const [error, setError] = useState<string | null>(null);
 
   const apply = (p: Promise<School[]>) =>
@@ -113,14 +112,26 @@ export default function SchoolScreen() {
   const activeCount = schools.filter((s) => s.active).length;
   // The saved school may predate newer fields (address): prefer the fresh directory row.
   const current = school ? (schools.find((s) => s.id === school.id) ?? school) : null;
-  const q = fold(query.trim());
+  const q = fold((query ?? '').trim());
+  const boxText = query ?? current?.name ?? '';
   const shown = useMemo(() => {
-    // With a school chosen, the long list only shows on request: searching is the quicker way.
-    if (!q) return school && !browsing ? [] : schools.filter((s) => s.active);
+    if (!q) {
+      // A short first list, schools in the same ward as the current one first; typing finds the rest.
+      const others = schools.filter((s) => s.active && s.id !== school?.id);
+      const near = others.filter((s) => s.ward === current?.ward);
+      return [...near, ...others.filter((s) => s.ward !== current?.ward)].slice(0, FIRST_LIST);
+    }
     // Covered schools first, then the rest of the directory.
     const hits = schools.filter((s) => fold(`${s.name} ${s.ward}`).includes(q));
     return [...hits.filter((s) => s.active), ...hits.filter((s) => !s.active)].slice(0, MAX_RESULTS);
-  }, [schools, q, school, browsing]);
+  }, [schools, q, school, current?.ward]);
+
+  const custom = allergies.filter(isCustomAllergy);
+  const addOther = () => {
+    const term = otherAllergy.trim().replace(/\s+/g, ' ').slice(0, 30);
+    if (term && !allergies.some((a) => a.toLowerCase() === term.toLowerCase())) toggleAllergy(term);
+    setOtherAllergy('');
+  };
 
   return (
     <Screen refreshing={refreshing} onRefresh={refresh}>
@@ -151,13 +162,49 @@ export default function SchoolScreen() {
               </Pressable>
             );
           })}
+          {custom.map((term) => (
+            <Pressable
+              key={term}
+              onPress={() => toggleAllergy(term)}
+              accessibilityRole="button"
+              accessibilityLabel={`Bỏ ${term}`}
+              style={[styles.allergy, { borderColor: theme.danger, backgroundColor: theme.dangerSoft }]}>
+              <ThemedText type="smallBold" style={{ color: theme.danger }}>✓ {term}  ✕</ThemedText>
+            </Pressable>
+          ))}
         </View>
+        {custom.length < MAX_CUSTOM_ALLERGIES ? (
+          <View style={styles.otherRow}>
+            <TextInput
+              value={otherAllergy}
+              onChangeText={setOtherAllergy}
+              onSubmitEditing={addOther}
+              placeholder="Khác, ví dụ: thịt vịt, kiwi…"
+              placeholderTextColor={theme.textSecondary}
+              returnKeyType="done"
+              maxLength={30}
+              style={[styles.other, { color: theme.text, borderColor: theme.border, backgroundColor: theme.backgroundElement }]}
+            />
+            <Pressable
+              onPress={addOther}
+              disabled={!otherAllergy.trim()}
+              accessibilityRole="button"
+              style={[styles.add, { backgroundColor: theme.accent, opacity: otherAllergy.trim() ? 1 : 0.4 }]}>
+              <ThemedText type="smallBold" style={{ color: theme.onAccent }}>Thêm</ThemedText>
+            </Pressable>
+          </View>
+        ) : null}
+        {custom.length ? (
+          <ThemedText type="small" themeColor="textSecondary">
+            Mục tự thêm được dò theo tên món và nguyên liệu thường dùng, nên có thể sót. Hãy xác nhận với nhà trường.
+          </ThemedText>
+        ) : null}
       </View>
 
       <View style={styles.section}>
         <SectionTitle icon="🏫">Trường của con</SectionTitle>
         {current ? (
-          <View style={[styles.current, { borderColor: theme.accent, backgroundColor: theme.backgroundElement }]}>
+          <View style={[styles.current, { borderColor: theme.accent, backgroundColor: theme.backgroundSelected }]}>
             <ThemedText type="smallBold">✓ {current.name}</ThemedText>
             <ThemedText type="small" themeColor="textSecondary">{LEVEL[current.level] ?? current.level}</ThemedText>
             {current.address ? <ThemedText type="small" themeColor="textSecondary">📍 {current.address}</ThemedText> : null}
@@ -165,14 +212,15 @@ export default function SchoolScreen() {
         ) : null}
         <View>
           <TextInput
-            value={query}
+            value={boxText}
             onChangeText={setQuery}
-            placeholder={school ? 'Đổi trường: gõ tên trường…' : 'Tìm trong tất cả trường công TP.HCM…'}
+            placeholder="Tìm trường của con…"
             placeholderTextColor={theme.textSecondary}
             autoCorrect={false}
+            selectTextOnFocus={query === null}
             style={[styles.search, { color: theme.text, borderColor: theme.border, backgroundColor: theme.backgroundElement }]}
           />
-          {query ? (
+          {boxText ? (
             <Pressable
               onPress={() => setQuery('')}
               accessibilityRole="button"
@@ -187,15 +235,9 @@ export default function SchoolScreen() {
       {error ? <ThemedText style={{ color: theme.warn }}>Không tải được danh sách trường: {error}</ThemedText> : null}
       {!q && schools.length ? (
         <ThemedText type="small" themeColor="textSecondary">
-          {activeCount} trường đang có thực đơn. Không thấy trường của con? Gõ tên để tìm trong {schools.length} trường.
+          {activeCount} trường đang có thực đơn{shown.length < activeCount - (school ? 1 : 0) ? `, đang hiện ${shown.length} trường` : ''}.
+          Không thấy trường của con? Gõ tên để tìm trong {schools.length} trường.
         </ThemedText>
-      ) : null}
-      {!q && school && schools.length ? (
-        <Pressable onPress={() => setBrowsing((b) => !b)} accessibilityRole="button">
-          <ThemedText type="linkPrimary">
-            {browsing ? 'Ẩn danh sách ▴' : `Xem ${activeCount} trường đang có thực đơn ▾`}
-          </ThemedText>
-        </Pressable>
       ) : null}
       {q && !shown.length && schools.length ? (
         <ThemedText type="small" themeColor="textSecondary">
@@ -224,8 +266,7 @@ export default function SchoolScreen() {
               key={s.id}
               onPress={() => {
                 setSchool(s);
-                setQuery('');
-                setBrowsing(false);
+                setQuery(null);
                 track('school_selected', s.code);
                 router.navigate('/');
               }}
@@ -263,6 +304,16 @@ const styles = StyleSheet.create({
   },
   sectionIcon: { fontSize: 18, lineHeight: 24 },
   sectionText: { fontSize: 17, lineHeight: 24, fontWeight: 700 },
+  otherRow: { flexDirection: 'row', gap: Spacing.two, alignItems: 'center' },
+  other: {
+    flex: 1,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 999,
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.two,
+    fontSize: 15,
+  },
+  add: { borderRadius: 999, paddingHorizontal: Spacing.three, paddingVertical: Spacing.two },
   current: { borderWidth: 1, borderRadius: Spacing.three, padding: Spacing.three, gap: 2 },
   clear: {
     position: 'absolute',

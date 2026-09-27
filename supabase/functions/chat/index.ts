@@ -1,9 +1,11 @@
-// KSMeals chat: answers parents' questions from the chosen school's published menus.
+// KSMeals chat: answers parents' questions from the chosen school's published menus, plus any
+// other covered school the parent names (to ask about it or compare).
 //
 // Called by the app with the publishable key (not a JWT, so gateway JWT checks are off and
 // the key is checked here). The Gemini key and the database secret key stay on the server.
 //
-// POST { device_id: uuid, school_id: number, messages: [{ role: "user" | "assistant", content }] }
+// POST { device_id: uuid, school_id: number, messages: [{ role: "user" | "assistant", content }],
+//        allergies: [group id | term typed by the parent] }
 // -> { reply, remaining }
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -41,15 +43,52 @@ Quy tắc:
 - Được phép: trả lời về thực đơn, món ăn, dinh dưỡng ước tính, gợi ý bữa tối ở nhà để cân bằng với bữa ở trường.
 - Dị ứng: CHỈ lấy món từ CHỈ MỤC DỊ ỨNG (danh sách đầy đủ, đã được kiểm tra), chép đúng ngày, bữa và tên món trong khoảng thời gian được hỏi, không thêm món nào khác; nhắc thêm "thành phần ẩn" nếu bữa đó có. Nếu chỉ mục không có món nào cho chất đó thì nói là không thấy món nào có nhãn đó. Viết tự nhiên (ví dụ "Củ sắn xào tôm (có tôm)"), không chép nguyên cú pháp [có thể chứa: ...]. LUÔN nhắc ba mẹ xác nhận lại với nhà trường. Không bao giờ nói món nào "an toàn" hay "chắc chắn không có".
 - Không chẩn đoán hay khuyên điều trị; vấn đề sức khỏe thì khuyên hỏi bác sĩ.
+- Trường: mặc định trả lời theo TRƯỜNG ĐANG CHỌN của ba mẹ. Nếu ba mẹ hỏi về một trường có trong mục TRƯỜNG KHÁC thì trả lời theo dữ liệu trường đó (ghi rõ tên trường) và được so sánh các trường. Nếu hỏi về trường không có dữ liệu bên dưới: nói em chưa có thực đơn trường đó trong câu hỏi này, mời ba mẹ gõ đầy đủ tên trường (ví dụ "Tiểu học Phan Chu Trinh"), hoặc đổi trường ở tab Hồ sơ; nếu trường chưa có trên KSMeals thì bấm "Báo tôi khi có" ở tab Hồ sơ. Không nói là em chỉ biết một trường.
 - Câu hỏi ngoài chủ đề bữa ăn của trẻ: từ chối nhẹ nhàng và gợi ý câu hỏi phù hợp.
 - Không nhận xét tiêu cực về nhà trường.
 - Ghi ngày dạng "Thứ Năm 24/9", không ghi năm.
 - Xưng "em", gọi người hỏi là "ba mẹ". Trả lời bằng tiếng Việt, thân thiện, ngắn gọn (tối đa khoảng 120 từ), dùng gạch đầu dòng khi liệt kê, không dùng bảng, không in đậm/in nghiêng.`;
 
 type Meal = {
-  date: string; meal_type: string; dishes: string[]; allergens: string[]; dish_allergens: string[][];
-  nutrition: { kcal?: number; protein_g?: number } | null; ai_note: string | null;
+  school_id: number; date: string; meal_type: string; dishes: string[]; allergens: string[]; dish_allergens: string[][];
+  ingredients: string[] | null; nutrition: { kcal?: number; protein_g?: number } | null; ai_note: string | null;
 };
+type School = { id: number; name: string; level: string };
+
+const MAX_CUSTOM_ALLERGIES = 5;
+const MAX_OTHER_SCHOOLS = 2;
+
+/** Lowercase without diacritics. */
+const fold = (s: string) =>
+  s.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D").toLowerCase();
+const words = (s: string) => fold(s).replace(/[^a-z0-9]+/g, " ").trim();
+
+// Same rules as customMatcher in app/src/lib/labels.ts: "thịt vịt" finds "Bún măng vịt"; typed with
+// diacritics it is exact ("cá" is not "cà"), typed without, diacritics are ignored. Whole words only.
+const GENERIC = /^(thịt|con|trái|quả|món|thit|trai|qua|mon)\s+/i;
+function customMatcher(term: string): (text: string) => boolean {
+  const core = term.trim().toLowerCase().normalize("NFC").replace(GENERIC, "");
+  const exact = fold(core) !== core;
+  const needle = exact ? core : fold(core);
+  const escaped = needle.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const re = new RegExp(`(^|[^\\p{L}])${escaped}($|[^\\p{L}])`, "u");
+  return (text) => re.test(exact ? text.toLowerCase().normalize("NFC") : fold(text));
+}
+
+// "Trường Tiểu học Phan Chu Trinh" -> "phan chu trinh": the part parents actually type.
+const LEVEL_PREFIX = /^(truong )?(mam non|mau giao|nha tre|tieu hoc|trung hoc co so|thcs|th|mn|mg) /;
+
+/** Covered schools other than the chosen one that the parent names in their messages. */
+function mentionedSchools(texts: string[], schools: School[], chosenId: number): School[] {
+  const said = ` ${words(texts.join(" "))} `;
+  return schools
+    .filter((s) => s.id !== chosenId)
+    .filter((s) => {
+      const key = words(s.name).replace(LEVEL_PREFIX, "");
+      return key.length >= 4 && !/^\d+$/.test(key) && said.includes(` ${key} `);
+    })
+    .slice(0, MAX_OTHER_SCHOOLS);
+}
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { ...CORS, "Content-Type": "application/json" } });
@@ -96,19 +135,10 @@ async function consume(deviceId: string, today: string): Promise<number> {
   return DAILY_LIMIT - used - 1;
 }
 
-function menuContext(
-  school: { name: string; level: string },
-  meals: Meal[],
-  today: { iso: string; weekday: number },
-  allergies: string[],
-) {
+/** Menus and the allergen index of one school. Custom terms (typed by the parent) are matched here, in code. */
+function schoolContext(school: School, meals: Meal[], custom: string[]) {
   const lines = [
     `Trường: ${school.name} (${LEVEL[school.level] ?? school.level})`,
-    `Hôm nay: ${WEEKDAY[today.weekday]} ${today.iso}`,
-    allergies.length
-      ? `Hồ sơ của con: dị ứng với ${allergies.map((a) => ALLERGEN[a]).join(", ")}. Khi trả lời về một ngày/bữa có món ` +
-        "nằm trong CHỈ MỤC DỊ ỨNG của các chất này, chủ động nhắc ba mẹ món đó."
-      : "Hồ sơ của con: chưa khai báo dị ứng.",
     "DỮ LIỆU THỰC ĐƠN (dinh dưỡng là ước tính cho một suất; [có thể chứa: ...] là nhãn dị ứng của từng món):",
   ];
   let lastDate = "";
@@ -142,11 +172,40 @@ function menuContext(
     for (const a of m.allergens ?? []) {
       if (!(m.dish_allergens ?? []).some((t) => t.includes(a))) (index[a] ??= []).push(`${when}: thành phần ẩn, không rõ món`);
     }
+    for (const term of custom) {
+      const match = customMatcher(term);
+      const hits = m.dishes.filter(match);
+      for (const d of hits) (index[term] ??= []).push(`${when}: ${d}`);
+      if (!hits.length && (m.ingredients ?? []).some(match)) (index[term] ??= []).push(`${when}: thành phần ẩn, không rõ món`);
+    }
   }
-  lines.push("\nCHỈ MỤC DỊ ỨNG (danh sách đầy đủ và duy nhất; dùng mục này khi trả lời về dị ứng):");
+  lines.push("CHỈ MỤC DỊ ỨNG (danh sách đầy đủ và duy nhất; dùng mục này khi trả lời về dị ứng):");
   for (const [a, items] of Object.entries(index)) lines.push(`- ${ALLERGEN[a] ?? a}: ${items.join("; ")}`);
   if (!Object.keys(index).length) lines.push("- (không có món nào có nhãn dị ứng)");
   return lines.join("\n");
+}
+
+function menuContext(
+  chosen: School,
+  others: School[],
+  meals: Meal[],
+  today: { iso: string; weekday: number },
+  allergies: string[],
+  custom: string[],
+) {
+  const profile = [...allergies.map((a) => ALLERGEN[a]), ...custom];
+  const parts = [
+    `Hôm nay: ${WEEKDAY[today.weekday]} ${today.iso}`,
+    profile.length
+      ? `Hồ sơ của con: dị ứng với ${profile.join(", ")}. Khi trả lời về một ngày/bữa có món ` +
+        "nằm trong CHỈ MỤC DỊ ỨNG của các chất này, chủ động nhắc ba mẹ món đó."
+      : "Hồ sơ của con: chưa khai báo dị ứng.",
+    `\n=== TRƯỜNG ĐANG CHỌN ===\n${schoolContext(chosen, meals.filter((m) => m.school_id === chosen.id), custom)}`,
+  ];
+  for (const s of others) {
+    parts.push(`\n=== TRƯỜNG KHÁC (ba mẹ nhắc tới) ===\n${schoolContext(s, meals.filter((m) => m.school_id === s.id), custom)}`);
+  }
+  return parts.join("\n");
 }
 
 Deno.serve(async (req) => {
@@ -162,6 +221,12 @@ Deno.serve(async (req) => {
   }
   const deviceId = body.device_id ?? "";
   const allergies = (body.allergies ?? []).filter((a) => a in ALLERGEN);
+  // Anything else in the profile is a term the parent typed ("thịt vịt").
+  const custom = (body.allergies ?? [])
+    .filter((a) => typeof a === "string" && !(a in ALLERGEN))
+    .map((a) => a.trim().slice(0, 30))
+    .filter((a) => a.length >= 2)
+    .slice(0, MAX_CUSTOM_ALLERGIES);
   const schoolId = Number(body.school_id);
   const history = (body.messages ?? [])
     .filter((m) => (m.role === "user" || m.role === "assistant") && typeof m.content === "string")
@@ -178,12 +243,16 @@ Deno.serve(async (req) => {
       return json({ error: "limit", reply: `Bạn đã dùng hết ${DAILY_LIMIT} câu hỏi hôm nay. Mai hỏi tiếp nhé!` }, 429);
     }
 
-    const schools = await db(`schools?select=name,level&id=eq.${schoolId}&active=eq.true`) as { name: string; level: string }[];
-    if (!schools.length) return json({ error: "unknown school" }, 404);
+    const schools = await db("schools?select=id,name,level&active=eq.true") as School[];
+    const chosen = schools.find((s) => s.id === schoolId);
+    if (!chosen) return json({ error: "unknown school" }, 404);
+    // Another covered school named in the conversation ("thực đơn trường Phan Chu Trinh") is added too.
+    const others = mentionedSchools(history.filter((m) => m.role === "user").map((m) => m.content), schools, schoolId);
+    const ids = [chosen, ...others].map((s) => s.id).join(",");
     // Last week to next week around today.
     const monday = shift(today.iso, -((today.weekday + 6) % 7));
     const meals = await db(
-      `meals?select=date,meal_type,dishes,allergens,dish_allergens,nutrition,ai_note&school_id=eq.${schoolId}` +
+      `meals?select=school_id,date,meal_type,dishes,allergens,dish_allergens,ingredients,nutrition,ai_note&school_id=in.(${ids})` +
         `&status=eq.published&date=gte.${shift(monday, -7)}&date=lte.${shift(monday, 11)}&order=date`,
     ) as Meal[];
 
@@ -194,7 +263,7 @@ Deno.serve(async (req) => {
         model: LLM_MODEL,
         temperature: 0.3,
         messages: [
-          { role: "system", content: `${SYSTEM_PROMPT}\n\n${menuContext(schools[0], meals, today, allergies)}` },
+          { role: "system", content: `${SYSTEM_PROMPT}\n\n${menuContext(chosen, others, meals, today, allergies, custom)}` },
           ...history,
         ],
       }),

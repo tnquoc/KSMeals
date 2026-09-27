@@ -96,6 +96,25 @@ def dates_in_text(text: str, anchor: date) -> set[date]:
     return out
 
 
+SCHOOL_WEEK_RE = re.compile(r"\btu[aầ]n[\s-]*(\d{1,2})\b", re.I)
+
+
+def school_week_monday(title: str, slug: str, published_at: date) -> date | None:
+    """Monday of "Tuần N" of the school year, for posts titled only "Thực đơn Tuần 4 - Năm học 2026-2027".
+
+    Week 1 starts on the first Monday on or after 5 September (opening day). Schools don't all
+    count the same way ("Tuần 1 tháng 10"), so the result is only kept when the post went up in
+    the days before that week or during it.
+    """
+    m = SCHOOL_WEEK_RE.search(title or "") or SCHOOL_WEEK_RE.search(slug or "")
+    if not m or not 1 <= int(m.group(1)) <= 45:
+        return None
+    year = published_at.year if published_at.month >= 8 else published_at.year - 1
+    opening = date(year, 9, 5)
+    monday = opening + timedelta(days=(7 - opening.weekday()) % 7, weeks=int(m.group(1)) - 1)
+    return monday if -10 <= (published_at - monday).days <= 4 else None
+
+
 def week_of(d: date) -> tuple[date, date]:
     """Monday..Friday of the week containing d."""
     monday = d - timedelta(days=d.weekday())

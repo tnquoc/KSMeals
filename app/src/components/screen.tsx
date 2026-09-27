@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { RefreshControl, ScrollView, StyleSheet } from 'react-native';
+import { Platform, RefreshControl, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedView } from '@/components/themed-view';
@@ -19,7 +19,11 @@ export function Screen({ children, refreshing = false, onRefresh }: Props) {
     <ThemedView style={styles.root}>
       <SafeAreaView edges={['top']} style={styles.safe}>
         <ScrollView
-          contentContainerStyle={[styles.content, { paddingBottom: BottomTabInset + insets.bottom + Spacing.five }]}
+          contentContainerStyle={[
+            styles.content,
+            // iOS native tabs already inset the first ScrollView for the tab bar and home indicator.
+            { paddingBottom: Platform.OS === 'ios' ? Spacing.four : BottomTabInset + insets.bottom + Spacing.five },
+          ]}
           refreshControl={onRefresh ? <RefreshControl refreshing={refreshing} onRefresh={onRefresh} /> : undefined}>
           {children}
         </ScrollView>

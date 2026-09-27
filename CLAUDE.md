@@ -19,7 +19,7 @@ Plan and progress: `roadmap.md`. Setup and commands: `README.md`. App-specific r
 
 ## Gotchas
 - Gemini free tier: `gemini-3.5-flash` = 20 req/day, so the default is `gemini-3.5-flash-lite`; chat and pipeline share the quota (chat limit `CHAT_DAILY_LIMIT`, default 20).
-- Allergy answers must come from `meals.dish_allergens` + the allergen index built in code, never from the model's own reading.
+- Allergy answers must come from `meals.dish_allergens` + the allergen index built in code, never from the model's own reading. Allergies the parent types ("thịt vịt") are matched by `customMatcher`, kept identical in `app/src/lib/labels.ts` and `supabase/functions/chat/index.ts`.
 - robots.txt disallows `/Timkiem`; crawl with `Fetcher` (low concurrency). School sites sometimes go down for ~15 min.
 - Git Bash rewrites `/KSMeals` paths: use `MSYS_NO_PATHCONV=1` for local `EXPO_BASE_URL=/KSMeals npx expo export -p web`.
 - A long-running `npx expo start` started before route changes regenerates bad typed routes (`/../lib/...`); restart it, or regenerate `.expo/types` before `npx tsc --noEmit`.
@@ -29,4 +29,4 @@ Plan and progress: `roadmap.md`. Setup and commands: `README.md`. App-specific r
 1. Owner shares the web link with parents in the 7 tracked wards; after 1–2 weeks read `pipeline.stats` (key metric: devices active 3+ days/week).
 2. Google Play first (USD 25): EAS build + morning push notifications. Apple later.
 3. Allergy 2 levels (red "Có" from dish names vs orange "Thường có" from recipes, per-dish ingredients) — postponed by the owner.
-4. Legacy .doc/.xls menus (LibreOffice on Actions); nhà trẻ/mẫu giáo variants; tray photos with children's faces are not blurred (owner's decision).
+4. Nhà trẻ/mẫu giáo variants; tray photos with children's faces are not blurred (owner's decision).

@@ -5,7 +5,7 @@ needs_review instead of the app. Showing nothing beats showing the wrong food.
 """
 from datetime import date, timedelta
 
-from pipeline.dates import dates_in_text, parse_slug_range, parse_title_range, week_of
+from pipeline.dates import dates_in_text, parse_slug_range, parse_title_range, school_week_monday, week_of
 
 MAX_DAYS_BEFORE_POST = 21   # menus are posted ahead of time, rarely long after
 MAX_DAYS_AFTER_POST = 45    # some schools post a whole month at once
@@ -36,8 +36,8 @@ def build_meals(ocr: dict, title: str, slug: str, published_at: date) -> tuple[l
     if hint and ocr_start and ocr_start != hint[0]:
         issues.append(f"week start mismatch: image {ocr_start}, title/slug {hint[0]}")
 
-    # Monday used when a day has no readable date.
-    fallback_monday = ocr_start or (hint[0] if hint else None)
+    # Monday used when a day has no readable date; last resort: "Tuần N" of the school year.
+    fallback_monday = ocr_start or (hint[0] if hint else None) or school_week_monday(title, slug, published_at)
     if fallback_monday:
         fallback_monday = week_of(fallback_monday)[0]
 

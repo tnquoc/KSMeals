@@ -6,7 +6,7 @@ from pathlib import Path
 from pipeline.addresses import parse_address
 from pipeline.allergens import detect
 from pipeline.crawl import parse_post
-from pipeline.dates import parse_slug_range, parse_title_range
+from pipeline.dates import parse_slug_range, parse_title_range, school_week_monday
 from pipeline.process import interpret, tray_meal_type
 from pipeline.discover import parse_schools, parse_ward_codes
 from pipeline.split import build_meals
@@ -130,6 +130,24 @@ def test_build_meals_fills_missing_dates_from_title():
     rows, issues = build_meals(ocr, "Tuần 3 (21/09/2026 -25/09/2026)", "", date(2026, 9, 18))
     assert issues == []
     assert sorted({r["date"] for r in rows}) == [date(2026, 9, 21) + timedelta(days=i) for i in range(5)]
+
+
+def test_school_week_number():
+    # THCS Lê Thành Công: "Tuần N - Năm học", no dates in the title or the .doc file.
+    assert school_week_monday("Thực đơn Tuần 4 - Năm học 2026-2027", "", date(2026, 9, 26)) == date(2026, 9, 28)
+    assert school_week_monday("Thực đơn Tuần 2 - Năm học 2026-2027", "", date(2026, 9, 13)) == date(2026, 9, 14)
+    assert school_week_monday("", "thuc-don-tuan-3-nam-hoc-2026-2027", date(2026, 9, 20)) == date(2026, 9, 21)
+    # Week of the month, not of the school year: disagrees with the post date, so unused.
+    assert school_week_monday("Thực đơn tuần 1 tháng 10", "", date(2026, 9, 30)) is None
+    assert school_week_monday("Thực đơn bán trú", "", date(2026, 9, 30)) is None
+
+    ocr = _levansi_ocr()
+    for d in ocr["days"]:
+        d["date"] = None
+    ocr["week_start"] = None
+    rows, issues = build_meals(ocr, "Thực đơn Tuần 3 - Năm học 2026-2027", "", date(2026, 9, 20))
+    assert issues == []
+    assert sorted({r["date"] for r in rows})[0] == date(2026, 9, 21)
 
 
 def test_build_meals_trusts_date_confirmed_by_title():

@@ -37,6 +37,7 @@ export type Meal = {
   ai_note: string | null;
   allergens: string[]; // whole meal, including usual hidden ingredients
   dish_allergens: string[][]; // per dish, parallel to `dishes`
+  ingredients: string[] | null; // usual ingredients (AI), for allergies the parent typed
   source_post_id: number | null;
 };
 
@@ -101,7 +102,7 @@ export async function requestSchool(deviceId: string, code: string): Promise<num
 
 export function fetchMeals(schoolId: number, from: string, to: string): Promise<Meal[]> {
   return get(
-    'meals?select=date,meal_type,dishes,courses,tray_image_urls,nutrition,ai_note,allergens,dish_allergens,source_post_id' +
+    'meals?select=date,meal_type,dishes,courses,tray_image_urls,nutrition,ai_note,allergens,dish_allergens,ingredients,source_post_id' +
       `&school_id=eq.${schoolId}&date=gte.${from}&date=lte.${to}&order=date`,
   );
 }

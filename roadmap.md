@@ -63,7 +63,7 @@ sitemap.xml ─► raw_posts ─► tải ảnh gốc ─► OCR (Gemini) ─►
 ```
 
 - [x] **1.1 Crawl bài thực đơn** (`pipeline/crawl.py`): sitemap → bài mới → ảnh/tài liệu. Nhận 7 kiểu đăng bài (ảnh trong bài, ảnh ở `/data/doc/`, ảnh thư viện `haydung`, PDF, Word, Excel). Thử nghiệm 20 trường: lấy được file cho 93/97 bài.
-- [x] **1.2 Tải ảnh/tài liệu**: ảnh bản gốc; PDF → ảnh từng trang; .docx/.xlsx → chữ. ⏳ Chưa hỗ trợ .doc/.xls đời cũ (cần LibreOffice, sẽ cài trên GitHub Actions).
+- [x] **1.2 Tải ảnh/tài liệu**: ảnh bản gốc; PDF → ảnh từng trang; .docx/.xlsx → chữ; .doc/.xls đời cũ được LibreOffice (cài trên GitHub Actions) đổi sang .docx/.xlsx trước. Bài chỉ ghi "Tuần N - Năm học" (không có ngày) được tính tuần theo năm học, đối chiếu với ngày đăng.
 - [x] **1.3 OCR bằng Gemini** (`pipeline/ocr.py`, `pipeline/process.py`, model `gemini-3.5-flash-lite`): thử nghiệm 90 bài → 75 publish, 4 cần duyệt, 11 không phải thực đơn. Đối chiếu tay: tên món đúng khoảng 95%+.
   - ⚠️ Gói miễn phí: `gemini-3.5-flash` chỉ 20 request/ngày → dùng bản `flash-lite` (đọc đúng 28/28 món trên ảnh chuẩn, nhanh gấp 3). Chạy thật 375 trường cần bật billing hoặc hạn mức cao hơn.
   - Lỗi đã biết: gộp thực đơn **nhà trẻ / mẫu giáo** vào cùng một bữa; đôi khi tách sai món có dấu phẩy ("Trứng chiên, thịt xay"); ảnh "Khẩu phần ăn" bị coi là không phải thực đơn thay vì ảnh khay.

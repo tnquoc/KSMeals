@@ -63,11 +63,47 @@ export const ALLERGEN: Record<string, string> = {
   tree_nut: 'Hạt',
 };
 
-/** Allergens of a meal that match the child's profile, split by dish and hidden ingredients. */
-export function allergyHits(meal: { dishes: string[]; allergens: string[]; dish_allergens?: string[][] }, profile: string[]) {
-  const perDish = meal.dishes.map((_, i) => (meal.dish_allergens?.[i] ?? []).filter((a) => profile.includes(a)));
+/** Lowercase without diacritics: "le van si" finds "Lê Văn Sĩ". */
+export const fold = (s: string) =>
+  s.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase();
+const hasMarks = (s: string) => fold(s) !== s.toLowerCase();
+// Words parents add in front of the thing itself: "thịt vịt" should also find "bún măng vịt".
+const GENERIC = /^(thịt|con|trái|quả|món|thit|trai|qua|mon)\s+/i;
+
+/**
+ * Matcher for an allergy the parent typed (not one of the 10 groups). Whole words only.
+ * Typed with diacritics: exact ("cá" must not match "cà"); typed without: diacritics ignored.
+ */
+export function customMatcher(term: string): (text: string) => boolean {
+  const core = term.trim().toLowerCase().normalize('NFC').replace(GENERIC, '');
+  const exact = hasMarks(core);
+  const needle = exact ? core : fold(core);
+  const escaped = needle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const re = new RegExp(`(^|[^\\p{L}])${escaped}($|[^\\p{L}])`, 'u');
+  return (text) => re.test(exact ? text.toLowerCase().normalize('NFC') : fold(text));
+}
+
+export const isCustomAllergy = (a: string) => !(a in ALLERGEN);
+
+/**
+ * Allergens of a meal that match the child's profile, split by dish and hidden ingredients.
+ * The profile holds group ids (ALLERGEN) and free-text terms the parent typed ("thịt vịt"),
+ * which are looked up in dish names and the meal's usual ingredients.
+ */
+export function allergyHits(
+  meal: { dishes: string[]; allergens: string[]; dish_allergens?: string[][]; ingredients?: string[] | null },
+  profile: string[],
+) {
+  const custom = profile.filter(isCustomAllergy).map((t) => ({ term: t, match: customMatcher(t) }));
+  const perDish = meal.dishes.map((dish, i) => [
+    ...(meal.dish_allergens?.[i] ?? []).filter((a) => profile.includes(a)),
+    ...custom.filter((c) => c.match(dish)).map((c) => c.term),
+  ]);
   const inDishes = new Set(perDish.flat());
-  const hidden = meal.allergens.filter((a) => profile.includes(a) && !inDishes.has(a));
+  const hidden = [
+    ...meal.allergens.filter((a) => profile.includes(a) && !inDishes.has(a)),
+    ...custom.filter((c) => !inDishes.has(c.term) && (meal.ingredients ?? []).some(c.match)).map((c) => c.term),
+  ];
   return { perDish, hidden, count: perDish.filter((h) => h.length).length + (hidden.length ? 1 : 0) };
 }
 
