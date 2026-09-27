@@ -1,4 +1,6 @@
 # Build the Expo web app and publish it to GitHub Pages: https://<user>.github.io/KSMeals/
+# Also writes one static page per covered school (/truong/<code>/) plus sitemap.xml, so parents
+# find KSMeals from Google; rebuilt after every daily pipeline run to show the new menus.
 # The publishable key ends up in the public JS bundle; that is by design (RLS limits it to
 # reading published data). The secret key is never used here.
 name: Web app (GitHub Pages)
@@ -7,6 +9,9 @@ on:
   push:
     branches: [main]
     paths: ["app/**", ".github/workflows/web.yml"]
+  workflow_run:
+    workflows: ["Daily pipeline"]
+    types: [completed]
   workflow_dispatch:
 
 permissions:
@@ -50,6 +55,14 @@ jobs:
           npx expo export --platform web
           cp "dist/+not-found.html" dist/404.html
           touch dist/.nojekyll
+
+      - name: School pages and sitemap
+        env:
+          EXPO_BASE_URL: /${{ github.event.repository.name }}
+          SITE_ORIGIN: https://${{ github.repository_owner }}.github.io
+          EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+        run: node scripts/school-pages.mjs dist
 
       - uses: actions/configure-pages@v6
 
