@@ -13,9 +13,13 @@ import { fetchSchools, requestSchool, type School } from '@/lib/api';
 import { getDeviceId } from '@/lib/device';
 import { ALLERGEN, fold, isCustomAllergy, LEVEL } from '@/lib/labels';
 import { useSchool } from '@/lib/school-store';
+import { WARD_NAME } from '@/lib/wards';
 
 const REQUESTED_KEY = 'ksmeals.requested'; // school code -> number of parents who asked (at request time)
 const MAX_RESULTS = 40;
+// Street address when we have one, otherwise the ward: parents still see where the school is.
+const place = (s: School) => s.address || WARD_NAME[s.ward];
+
 const FIRST_LIST = 20; // covered schools shown before the parent types anything
 const MAX_CUSTOM_ALLERGIES = 5;
 
@@ -207,7 +211,7 @@ export default function SchoolScreen() {
           <View style={[styles.current, { borderColor: theme.accent, backgroundColor: theme.backgroundSelected }]}>
             <ThemedText type="smallBold">✓ {current.name}</ThemedText>
             <ThemedText type="small" themeColor="textSecondary">{LEVEL[current.level] ?? current.level}</ThemedText>
-            {current.address ? <ThemedText type="small" themeColor="textSecondary">📍 {current.address}</ThemedText> : null}
+            {place(current) ? <ThemedText type="small" themeColor="textSecondary">📍 {place(current)}</ThemedText> : null}
           </View>
         ) : null}
         <View>
@@ -256,7 +260,7 @@ export default function SchoolScreen() {
                 <ThemedText type="small" themeColor="textSecondary">
                   {LEVEL[s.level] ?? s.level} · Chưa có thực đơn trên KSMeals
                 </ThemedText>
-                {s.address ? <ThemedText type="small" themeColor="textSecondary">📍 {s.address}</ThemedText> : null}
+                {place(s) ? <ThemedText type="small" themeColor="textSecondary">📍 {place(s)}</ThemedText> : null}
                 <RequestButton school={s} count={requested[s.code]} onDone={(n) => markRequested(s.code, n)} />
               </View>
             );
@@ -273,7 +277,7 @@ export default function SchoolScreen() {
               style={row}>
               <ThemedText type="smallBold">{s.name}</ThemedText>
               <ThemedText type="small" themeColor="textSecondary">{LEVEL[s.level] ?? s.level}</ThemedText>
-              {s.address ? <ThemedText type="small" themeColor="textSecondary">📍 {s.address}</ThemedText> : null}
+              {place(s) ? <ThemedText type="small" themeColor="textSecondary">📍 {place(s)}</ThemedText> : null}
             </Pressable>
           );
         })}

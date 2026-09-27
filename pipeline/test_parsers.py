@@ -8,7 +8,7 @@ from pipeline.allergens import detect
 from pipeline.crawl import parse_post
 from pipeline.dates import parse_slug_range, parse_title_range, school_week_monday
 from pipeline.process import interpret, tray_meal_type
-from pipeline.discover import parse_schools, parse_ward_codes
+from pipeline.discover import parse_schools, parse_ward_codes, parse_ward_names
 from pipeline.split import build_meals
 from pipeline.survey import classify, is_menu_post, parse_sitemap
 
@@ -44,6 +44,7 @@ SITEMAP_XML = """<?xml version="1.0" encoding="utf-8"?>
 
 def test_ward_codes():
     assert parse_ward_codes(WARD_HTML) == {"phuongbenthanh", "xacangio", "dackhucondao"}
+    assert parse_ward_names(WARD_HTML) == {"dackhucondao": "Côn Đảo", "phuongbenthanh": "Bến Thành", "xacangio": "Cần Giờ"}
 
 
 def test_schools_grouped_by_level():
