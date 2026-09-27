@@ -13,6 +13,7 @@ import {
 import { router, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { Logo } from '@/components/logo';
 import { NoSchool } from '@/components/no-school';
 import { PageHeader } from '@/components/page-header';
 import { SchoolPill } from '@/components/school-pill';
@@ -31,6 +32,28 @@ const SUGGESTIONS = [
   'Tối nay nên nấu gì để bù cho bữa trưa ở trường?',
   'Thực đơn tuần này có món nào có tôm không?',
 ];
+
+const ASSISTANT_NAME = 'Trợ lý KSMeals';
+
+/** An assistant bubble with the KSMeals icon beside it; the name only above the first one. */
+function AssistantRow({ first, children }: { first?: boolean; children: React.ReactNode }) {
+  const theme = useTheme();
+  return (
+    <View style={styles.assistantRow}>
+      <Logo size={30} />
+      <View style={styles.assistantBody}>
+        {first ? (
+          <ThemedText type="smallBold" style={[styles.assistantName, { color: theme.accent }]}>
+            {ASSISTANT_NAME}
+          </ThemedText>
+        ) : null}
+        <View style={[styles.bubble, styles.theirs, { backgroundColor: theme.backgroundElement, borderColor: theme.border }]}>
+          {children}
+        </View>
+      </View>
+    </View>
+  );
+}
 
 // Replies may use light markdown; show it as plain text.
 const plain = (s: string) =>
@@ -128,6 +151,15 @@ export default function AskScreen() {
             </PageHeader>
 
             {!messages.length ? (
+              <AssistantRow first>
+                <ThemedText>
+                  Chào ba mẹ, em là trợ lý của KSMeals. Em trả lời theo thực đơn {school.name} đăng, về món ăn, dinh dưỡng, món
+                  cần tránh khi bé dị ứng, hay gợi ý bữa tối ở nhà.
+                </ThemedText>
+              </AssistantRow>
+            ) : null}
+
+            {!messages.length ? (
               <View style={styles.suggestions}>
                 <ThemedText type="small" themeColor="textSecondary">Gợi ý câu hỏi:</ThemedText>
                 {SUGGESTIONS.map((s) => (
@@ -141,26 +173,24 @@ export default function AskScreen() {
               </View>
             ) : null}
 
-            {messages.map((m, i) => {
-              const mine = m.role === 'user';
-              return (
-                <View
-                  key={i}
-                  style={[
-                    styles.bubble,
-                    mine
-                      ? [styles.mine, { backgroundColor: theme.accent }]
-                      : [styles.theirs, { backgroundColor: theme.backgroundElement, borderColor: theme.border }],
-                  ]}>
-                  <ThemedText style={mine ? { color: theme.onAccent } : undefined}>{plain(m.content)}</ThemedText>
+            {messages.map((m, i) =>
+              m.role === 'user' ? (
+                <View key={i} style={[styles.bubble, styles.mine, { backgroundColor: theme.accent }]}>
+                  <ThemedText style={{ color: theme.onAccent }}>{plain(m.content)}</ThemedText>
                 </View>
-              );
-            })}
+              ) : (
+                <AssistantRow key={i} first={i === messages.findIndex((x) => x.role === 'assistant')}>
+                  <ThemedText>{plain(m.content)}</ThemedText>
+                </AssistantRow>
+              ),
+            )}
             {busy ? (
-              <View style={[styles.bubble, styles.theirs, styles.typing, { backgroundColor: theme.backgroundElement, borderColor: theme.border }]}>
-                <ActivityIndicator size="small" />
-                <ThemedText type="small" themeColor="textSecondary">Đang trả lời…</ThemedText>
-              </View>
+              <AssistantRow first={!messages.some((m) => m.role === 'assistant')}>
+                <View style={styles.typing}>
+                  <ActivityIndicator size="small" />
+                  <ThemedText type="small" themeColor="textSecondary">Đang trả lời…</ThemedText>
+                </View>
+              </AssistantRow>
             ) : null}
 
             <ThemedText type="small" themeColor="textSecondary" style={styles.note}>
@@ -220,6 +250,9 @@ const styles = StyleSheet.create({
   mine: { alignSelf: 'flex-end' },
   theirs: { alignSelf: 'flex-start', borderWidth: StyleSheet.hairlineWidth },
   typing: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
+  assistantRow: { flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.two },
+  assistantBody: { flex: 1, gap: 2 },
+  assistantName: { fontSize: 12, marginLeft: Spacing.one },
   note: { marginTop: Spacing.two },
   inputBar: {
     flexDirection: 'row',
