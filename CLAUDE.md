@@ -12,7 +12,8 @@ Plan and progress: `roadmap.md`. Setup and commands: `README.md`. App-specific r
 
 ## Architecture
 - `pipeline/` (Python): discover → survey → crawl (`--tracked`, list in `data/tracked_schools.txt`) → process (Gemini OCR) → nutrition (+ keyword allergens in `pipeline/allergens.py`). State lives in Supabase (`pipeline/store.py`). Tests: `uv run python -m pipeline.test_parsers`.
-- `.github/workflows/daily.yml` runs crawl + process + nutrition at 05:00 VN. `web.yml` publishes the Expo web build to https://tnquoc.github.io/KSMeals/ on changes under `app/`.
+- `.github/workflows/daily.yml` runs crawl + process + nutrition at 05:00 VN. `web.yml` publishes the Expo web build to https://tnquoc.github.io/KSMeals/ on changes under `app/` and after each daily run; it also writes one static page per school (`app/scripts/school-pages.mjs`, `/truong/<code>/`) + `sitemap.xml` for Google.
+- Morning reminders: Web Push (`app/public/sw.js`, `app/src/lib/push.ts`, table `push_subscriptions` from migration 0010), sent by `pipeline/push.py` from `push.yml` at 06:30 VN on school days (`--dry-run` to preview).
 - `supabase/functions/chat` (Edge Function, Gemini). Deploy: token `SUPABASE_ACCESS_TOKEN` in `.env` (scoped, expires ~2026-12-25), `npx supabase@2.118.0 functions deploy chat --project-ref <ref from SUPABASE_URL> --no-verify-jwt --use-api`. No logs command: debug by temporarily returning error details.
 - `app/` Expo SDK 57 + Expo Router: tabs in `src/app/(tabs)` (index, week, ask, school), `/privacy` outside. Reads Supabase REST with the publishable key; anonymous events via RPC `track`.
 - Local tools: `uv run python -m pipeline.devserver` (viewer + review at 127.0.0.1:8765), `pipeline.demand`, `pipeline.stats`, `pipeline.addresses`, `scripts/make_icons.py build shield_steam`.
@@ -23,7 +24,7 @@ Plan and progress: `roadmap.md`. Setup and commands: `README.md`. App-specific r
 - robots.txt disallows `/Timkiem`; crawl with `Fetcher` (low concurrency). School sites sometimes go down for ~15 min.
 - Git Bash rewrites `/KSMeals` paths: use `MSYS_NO_PATHCONV=1` for local `EXPO_BASE_URL=/KSMeals npx expo export -p web`.
 - A long-running `npx expo start` started before route changes regenerates bad typed routes (`/../lib/...`); restart it, or regenerate `.expo/types` before `npx tsc --noEmit`.
-- Keys: `.env` (GEMINI_API_KEY, SUPABASE_URL, SUPABASE_SECRET_KEY, SUPABASE_PUBLISHABLE_KEY, SUPABASE_ACCESS_TOKEN) never committed; `app/.env.local` holds the public values. GitHub: secrets GEMINI_API_KEY, SUPABASE_URL, SUPABASE_SECRET_KEY, SUPABASE_PUBLISHABLE_KEY; variable CONTACT_EMAIL.
+- Keys: `.env` (GEMINI_API_KEY, SUPABASE_URL, SUPABASE_SECRET_KEY, SUPABASE_PUBLISHABLE_KEY, SUPABASE_ACCESS_TOKEN, VAPID_PRIVATE_KEY/VAPID_PUBLIC_KEY) never committed; `app/.env.local` holds the public values, the VAPID public key is in `app/src/lib/app-info.ts`. GitHub: secrets GEMINI_API_KEY, SUPABASE_URL, SUPABASE_SECRET_KEY, SUPABASE_PUBLISHABLE_KEY, VAPID_PRIVATE_KEY; variable CONTACT_EMAIL.
 
 ## Next up (see roadmap.md)
 1. Owner shares the web link with parents in the 7 tracked wards; after 1–2 weeks read `pipeline.stats` (key metric: devices active 3+ days/week).

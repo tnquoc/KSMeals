@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Alert, Platform, Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import { PageHeader } from '@/components/page-header';
+import { ReminderCard } from '@/components/reminder-card';
 import { Screen } from '@/components/screen';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
@@ -170,6 +171,8 @@ export default function SchoolScreen() {
   return (
     <Screen refreshing={refreshing} onRefresh={refresh}>
       <PageHeader title="Hồ sơ của con" />
+
+      <ReminderCard />
 
       <View style={styles.section}>
         <SectionTitle icon="🛡️">Con dị ứng với</SectionTitle>

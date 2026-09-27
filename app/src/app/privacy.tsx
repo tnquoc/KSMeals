@@ -36,6 +36,7 @@ const SECTIONS: { title: string; body: string[] }[] = [
       'Thống kê sử dụng: mã thiết bị, tên sự kiện (mở ứng dụng, xem ngày/tuần, chia sẻ, dùng trợ lý AI...), mã trường và hệ điều hành. Không kèm nội dung câu hỏi.',
       'Khi dùng "Hỏi AI": câu hỏi, mã trường và các nhóm dị ứng bạn đã chọn được gửi tới máy chủ KSMeals (Supabase, Singapore) và Google Gemini để tạo câu trả lời. KSMeals không lưu nội dung câu hỏi, chỉ đếm số câu mỗi ngày để giới hạn. Google xử lý dữ liệu theo điều khoản Gemini API và có thể dùng dữ liệu gửi qua gói miễn phí để cải thiện sản phẩm. Vì vậy, đừng nhập tên hay thông tin cá nhân của con vào ô hỏi.',
       'Khi bấm "Báo tôi khi có": mã thiết bị và mã trường.',
+      'Khi bật "Nhắc thực đơn mỗi sáng": địa chỉ nhận thông báo do trình duyệt tạo ra (một đường dẫn ngẫu nhiên, không chứa thông tin cá nhân), mã thiết bị, mã trường và các nhóm dị ứng bạn đã chọn, để gửi đúng thực đơn và lời nhắc. Thông báo đi qua dịch vụ đẩy thông báo của trình duyệt (Google, Apple hoặc Mozilla). Tắt nhắc hoặc xóa dữ liệu trên máy sẽ xóa ngay các thông tin này trên máy chủ.',
       'Như mọi trang web, các nhà cung cấp hạ tầng (GitHub Pages, Supabase) tự ghi địa chỉ IP và loại trình duyệt vào nhật ký máy chủ để vận hành và chống lạm dụng. KSMeals không lưu địa chỉ IP vào dữ liệu thống kê.',
     ],
   },

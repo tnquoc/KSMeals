@@ -1,0 +1,35 @@
+# Morning menu reminders (Web Push) at 06:30 Vietnam time on school days.
+# Runs after the daily pipeline (05:00), so today's menus are already in Supabase.
+name: Morning reminders
+
+on:
+  schedule:
+    - cron: "30 23 * * 0-4"  # 23:30 UTC Sun-Thu = 06:30 Mon-Fri in Vietnam; GitHub may start it a little late
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Only print the messages"
+        type: boolean
+        default: true
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+      VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
+      VAPID_SUBJECT: mailto:${{ vars.CONTACT_EMAIL }}
+      PYTHONUNBUFFERED: "1"
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: astral-sh/setup-uv@v10.2.0
+        with:
+          enable-cache: true
+
+      - run: uv sync --locked
+
+      - name: Send reminders
+        run: uv run python -m pipeline.push ${{ inputs.dry_run && '--dry-run' || '' }}

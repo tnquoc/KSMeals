@@ -5,6 +5,7 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 import { track } from '@/lib/analytics';
 import type { School } from '@/lib/api';
 import { forgetDeviceId } from '@/lib/device';
+import { disablePush, syncPush } from '@/lib/push';
 
 const SCHOOL_KEY = 'ksmeals.school';
 const ALLERGIES_KEY = 'ksmeals.allergies';
@@ -42,6 +43,11 @@ export function SchoolProvider({ children }: { children: ReactNode }) {
       .finally(() => setLoaded(true));
   }, []);
 
+  // A parent who gets morning reminders changed school or allergies: update what we send.
+  useEffect(() => {
+    if (loaded && school) syncPush(school.id, allergies);
+  }, [loaded, school, allergies]);
+
   const setSchool = (s: School) => {
     setSchoolState(s);
     AsyncStorage.setItem(SCHOOL_KEY, JSON.stringify(s)).catch(() => {});
@@ -55,6 +61,7 @@ export function SchoolProvider({ children }: { children: ReactNode }) {
   };
 
   const resetAll = async () => {
+    await disablePush();
     const keys = (await AsyncStorage.getAllKeys()).filter((k) => k.startsWith('ksmeals.'));
     await AsyncStorage.multiRemove(keys);
     forgetDeviceId();
