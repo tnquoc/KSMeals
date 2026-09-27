@@ -46,6 +46,13 @@ jobs:
             *) uv run python -m pipeline.crawl --since-days 10 --tracked ;;
           esac
 
+      # Some schools post menus as legacy .doc/.xls; LibreOffice converts them to .docx/.xlsx.
+      - name: Install LibreOffice
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends libreoffice-writer libreoffice-calc > /dev/null
+          soffice --version
+
       - name: Read menus with Gemini
         run: uv run python -m pipeline.process
 

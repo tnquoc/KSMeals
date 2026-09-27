@@ -92,12 +92,14 @@ class Store:
         } for p in posts]
         self.upsert("raw_posts", rows, "school_id,post_id")
 
-    def todo_posts(self, retry_review: bool = False) -> list[dict]:
-        """Pending posts, plus ones whose LLM call failed (quota/outage), oldest first."""
+    def todo_posts(self, retry_review: bool = False, retry_legacy: bool = False) -> list[dict]:
+        """Pending posts, plus ones whose LLM call failed (quota/outage), oldest first.
+        retry_legacy: also posts that failed only because .doc/.xls could not be read yet."""
         statuses = "pending,needs_review" if retry_review else "pending"
+        legacy = ",and(status.eq.failed,error.like.legacy*)" if retry_legacy else ""
         rows = self.select(
             "raw_posts", select="*,schools(code)", order="published_at.asc",
-            **{"or": f"(status.in.({statuses}),and(status.eq.failed,error.like.ocr:*))"},
+            **{"or": f"(status.in.({statuses}),and(status.eq.failed,error.like.ocr:*){legacy})"},
         )
         for r in rows:
             r["school_code"] = r.pop("schools")["code"]

@@ -1,7 +1,8 @@
 """Crawl recent menu posts: sitemap -> new menu posts -> post page -> image/document URLs.
 
 Menus come as body images, or attached PDF/Word/Excel files. PDFs are rendered to
-page images; .docx/.xlsx are converted to text. Legacy .doc/.xls are skipped for now.
+page images; .docx/.xlsx are converted to text. Legacy .doc/.xls are first converted to
+.docx/.xlsx with LibreOffice when it is installed (the daily workflow installs it).
 
 Only records new posts (status pending) in Supabase; downloading and OCR happen in
 process.py, so a run that stops early can resume anywhere from the database alone.
@@ -14,6 +15,9 @@ import asyncio
 import csv
 import io
 import re
+import shutil
+import subprocess
+import tempfile
 from datetime import date, datetime, timedelta
 from pathlib import Path
 from urllib.parse import unquote
@@ -117,6 +121,27 @@ def xlsx_to_text(data: bytes) -> str:
     return "\n".join(lines)
 
 
+LEGACY = {".doc": ".docx", ".xls": ".xlsx"}
+
+
+def soffice() -> str | None:
+    return shutil.which("soffice") or shutil.which("libreoffice")
+
+
+def legacy_to_modern(data: bytes, ext: str) -> bytes:
+    """Convert a .doc/.xls file to .docx/.xlsx with headless LibreOffice."""
+    target = LEGACY[ext]
+    with tempfile.TemporaryDirectory() as tmp:
+        src = Path(tmp) / f"menu{ext}"
+        src.write_bytes(data)
+        # A private profile dir: parallel or leftover LibreOffice instances can't lock it.
+        profile = (Path(tmp) / "profile").as_uri()
+        subprocess.run([soffice(), f"-env:UserInstallation={profile}", "--headless", "--norestore",
+                        "--convert-to", target[1:], "--outdir", tmp, str(src)],
+                       check=True, capture_output=True, timeout=120)
+        return (Path(tmp) / f"menu{target}").read_bytes()
+
+
 def pdf_to_images(data: bytes) -> list[bytes]:
     import pypdfium2 as pdfium
 
@@ -138,13 +163,16 @@ async def fetch_contents(f: Fetcher, post: dict) -> tuple[list[bytes], str, str 
             images.append(data)
     for url in post["doc_urls"]:
         ext = Path(url).suffix.lower()
-        if ext in (".doc", ".xls"):
+        if ext in LEGACY and not soffice():
             error = f"legacy {ext} not supported yet"
             continue
         data = await f.get_bytes(url)
         if not data:
             continue
         try:
+            if ext in LEGACY:
+                data = await asyncio.to_thread(legacy_to_modern, data, ext)
+                ext = LEGACY[ext]
             if ext == ".pdf":
                 images += pdf_to_images(data)
             else:

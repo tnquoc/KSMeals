@@ -17,7 +17,7 @@ from datetime import date
 from openai import APIConnectionError, InternalServerError, RateLimitError
 
 from pipeline import config
-from pipeline.crawl import fetch_contents
+from pipeline.crawl import fetch_contents, soffice
 from pipeline.dates import DATE_RE, _make
 from pipeline.fetch import Fetcher
 from pipeline.ocr import extract_menu, make_client
@@ -117,7 +117,7 @@ def interpret(post: dict, ocr: dict) -> tuple[list[dict], list[dict]]:
 
 async def run(limit: int | None, retry_review: bool):
     store = Store()
-    todo = store.todo_posts(retry_review)
+    todo = store.todo_posts(retry_review, retry_legacy=soffice() is not None)
     todo = todo[:limit] if limit else todo
     print(f"processing {len(todo)} posts with {config.LLM_MODEL}")
 
