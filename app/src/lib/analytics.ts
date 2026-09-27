@@ -23,6 +23,8 @@ export type EventName =
 
 export function track(name: EventName, schoolCode?: string | null, props: Record<string, string | number | boolean> = {}) {
   if (!SUPABASE_URL || !PUBLISHABLE_KEY) return;
+  // Only real parents count: not the dev server, Expo Go or automated browsers (screenshots, crawlers).
+  if (__DEV__ || (typeof navigator !== 'undefined' && (navigator as { webdriver?: boolean }).webdriver)) return;
   getDeviceId()
     .then((device) =>
       fetch(`${SUPABASE_URL}/rest/v1/rpc/track`, {
