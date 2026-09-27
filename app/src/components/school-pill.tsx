@@ -26,9 +26,7 @@ export function SchoolPill() {
       <ThemedText type="small" numberOfLines={1} style={styles.name}>
         {school.name}
       </ThemedText>
-      <ThemedText type="smallBold" style={{ color: theme.accent }}>
-        Đổi ›
-      </ThemedText>
+      <ThemedText type="smallBold" style={[styles.chevron, { color: theme.accent }]}>›</ThemedText>
     </Pressable>
   );
 }
@@ -48,4 +46,5 @@ const styles = StyleSheet.create({
   },
   emoji: { fontSize: 15, lineHeight: 20, marginRight: -Spacing.one },
   name: { flexShrink: 1, lineHeight: 20 },
+  chevron: { fontSize: 20, lineHeight: 20 },
 });

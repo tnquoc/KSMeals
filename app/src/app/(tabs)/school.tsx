@@ -21,6 +21,17 @@ const MAX_RESULTS = 40;
 const fold = (s: string) =>
   s.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase();
 
+/** Section heading on a tinted band, so the two parts of the profile stand out. */
+function SectionTitle({ icon, children }: { icon: string; children: string }) {
+  const theme = useTheme();
+  return (
+    <View style={[styles.sectionTitle, { backgroundColor: theme.backgroundSelected }]}>
+      <ThemedText style={styles.sectionIcon}>{icon}</ThemedText>
+      <ThemedText style={[styles.sectionText, { color: theme.accent }]}>{children}</ThemedText>
+    </View>
+  );
+}
+
 function RequestButton({ school, count, onDone }: { school: School; count?: number; onDone: (n: number) => void }) {
   const theme = useTheme();
   const [busy, setBusy] = useState(false);
@@ -67,6 +78,7 @@ export default function SchoolScreen() {
   const [requested, setRequested] = useState<Record<string, number>>({});
   const [query, setQuery] = useState('');
   const [refreshing, setRefreshing] = useState(false);
+  const [browsing, setBrowsing] = useState(false); // list every covered school without searching
   const [error, setError] = useState<string | null>(null);
 
   const apply = (p: Promise<School[]>) =>
@@ -99,22 +111,25 @@ export default function SchoolScreen() {
   };
 
   const activeCount = schools.filter((s) => s.active).length;
+  // The saved school may predate newer fields (address): prefer the fresh directory row.
+  const current = school ? (schools.find((s) => s.id === school.id) ?? school) : null;
   const q = fold(query.trim());
   const shown = useMemo(() => {
-    if (!q) return schools.filter((s) => s.active);
+    // With a school chosen, the long list only shows on request: searching is the quicker way.
+    if (!q) return school && !browsing ? [] : schools.filter((s) => s.active);
     // Covered schools first, then the rest of the directory.
     const hits = schools.filter((s) => fold(`${s.name} ${s.ward}`).includes(q));
     return [...hits.filter((s) => s.active), ...hits.filter((s) => !s.active)].slice(0, MAX_RESULTS);
-  }, [schools, q]);
+  }, [schools, q, school, browsing]);
 
   return (
     <Screen refreshing={refreshing} onRefresh={refresh}>
       <PageHeader title="Hồ sơ của con" />
 
       <View style={styles.section}>
-        <ThemedText type="smallBold">Con dị ứng với</ThemedText>
+        <SectionTitle icon="🛡️">Con dị ứng với</SectionTitle>
         <ThemedText type="small" themeColor="textSecondary">
-          Chọn để app tô đỏ những món có thể chứa các chất này. Chỉ lưu trên máy của bạn.
+          Chọn để app tô đỏ những món mà con có thể bị dị ứng. Chỉ lưu trên máy của bạn.
         </ThemedText>
         <View style={styles.allergyGrid}>
           {Object.entries(ALLERGEN).map(([id, label]) => {
@@ -139,20 +154,48 @@ export default function SchoolScreen() {
         </View>
       </View>
 
-      <ThemedText type="smallBold">Trường của con{school ? `: ${school.name}` : ''}</ThemedText>
-      <TextInput
-        value={query}
-        onChangeText={setQuery}
-        placeholder="Tìm trong tất cả trường công TP.HCM…"
-        placeholderTextColor={theme.textSecondary}
-        autoCorrect={false}
-        style={[styles.search, { color: theme.text, borderColor: theme.border, backgroundColor: theme.backgroundElement }]}
-      />
+      <View style={styles.section}>
+        <SectionTitle icon="🏫">Trường của con</SectionTitle>
+        {current ? (
+          <View style={[styles.current, { borderColor: theme.accent, backgroundColor: theme.backgroundElement }]}>
+            <ThemedText type="smallBold">✓ {current.name}</ThemedText>
+            <ThemedText type="small" themeColor="textSecondary">{LEVEL[current.level] ?? current.level}</ThemedText>
+            {current.address ? <ThemedText type="small" themeColor="textSecondary">📍 {current.address}</ThemedText> : null}
+          </View>
+        ) : null}
+        <View>
+          <TextInput
+            value={query}
+            onChangeText={setQuery}
+            placeholder={school ? 'Đổi trường: gõ tên trường…' : 'Tìm trong tất cả trường công TP.HCM…'}
+            placeholderTextColor={theme.textSecondary}
+            autoCorrect={false}
+            style={[styles.search, { color: theme.text, borderColor: theme.border, backgroundColor: theme.backgroundElement }]}
+          />
+          {query ? (
+            <Pressable
+              onPress={() => setQuery('')}
+              accessibilityRole="button"
+              accessibilityLabel="Xóa ô tìm kiếm"
+              hitSlop={8}
+              style={[styles.clear, { backgroundColor: theme.border }]}>
+              <ThemedText type="smallBold" style={styles.clearText}>✕</ThemedText>
+            </Pressable>
+          ) : null}
+        </View>
+      </View>
       {error ? <ThemedText style={{ color: theme.warn }}>Không tải được danh sách trường: {error}</ThemedText> : null}
       {!q && schools.length ? (
         <ThemedText type="small" themeColor="textSecondary">
           {activeCount} trường đang có thực đơn. Không thấy trường của con? Gõ tên để tìm trong {schools.length} trường.
         </ThemedText>
+      ) : null}
+      {!q && school && schools.length ? (
+        <Pressable onPress={() => setBrowsing((b) => !b)} accessibilityRole="button">
+          <ThemedText type="linkPrimary">
+            {browsing ? 'Ẩn danh sách ▴' : `Xem ${activeCount} trường đang có thực đơn ▾`}
+          </ThemedText>
+        </Pressable>
       ) : null}
       {q && !shown.length && schools.length ? (
         <ThemedText type="small" themeColor="textSecondary">
@@ -181,6 +224,8 @@ export default function SchoolScreen() {
               key={s.id}
               onPress={() => {
                 setSchool(s);
+                setQuery('');
+                setBrowsing(false);
                 track('school_selected', s.code);
                 router.navigate('/');
               }}
@@ -208,9 +253,39 @@ export default function SchoolScreen() {
 
 const styles = StyleSheet.create({
   section: { gap: Spacing.two },
+  sectionTitle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+    borderRadius: Spacing.three,
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.two,
+  },
+  sectionIcon: { fontSize: 18, lineHeight: 24 },
+  sectionText: { fontSize: 17, lineHeight: 24, fontWeight: 700 },
+  current: { borderWidth: 1, borderRadius: Spacing.three, padding: Spacing.three, gap: 2 },
+  clear: {
+    position: 'absolute',
+    right: Spacing.two + 2,
+    top: '50%',
+    marginTop: -12,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  clearText: { fontSize: 12, lineHeight: 14 },
   allergyGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
   allergy: { borderWidth: 1, borderRadius: 999, paddingHorizontal: Spacing.three, paddingVertical: Spacing.one + 2 },
-  search: { borderWidth: StyleSheet.hairlineWidth, borderRadius: Spacing.three, paddingHorizontal: Spacing.three, paddingVertical: Spacing.two, fontSize: 16 },
+  search: {
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: Spacing.three,
+    paddingLeft: Spacing.three,
+    paddingRight: Spacing.five + Spacing.two, // room for the clear button
+    paddingVertical: Spacing.two,
+    fontSize: 16,
+  },
   list: { gap: Spacing.two },
   row: { borderRadius: Spacing.three, borderWidth: StyleSheet.hairlineWidth, padding: Spacing.three, gap: 2 },
   about: { borderTopWidth: StyleSheet.hairlineWidth, paddingTop: Spacing.three, marginTop: Spacing.three, gap: Spacing.one },
