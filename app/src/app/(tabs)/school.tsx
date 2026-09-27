@@ -23,6 +23,21 @@ const place = (s: School) => s.address || WARD_NAME[s.ward];
 const FIRST_LIST = 20; // covered schools shown before the parent types anything
 const MAX_CUSTOM_ALLERGIES = 5;
 
+/** ✕ inside the right end of a text box; the box needs right padding for it. */
+function ClearButton({ onPress }: { onPress: () => void }) {
+  const theme = useTheme();
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel="Xóa chữ đã gõ"
+      hitSlop={8}
+      style={[styles.clear, { backgroundColor: theme.border }]}>
+      <ThemedText type="smallBold" style={styles.clearText}>✕</ThemedText>
+    </Pressable>
+  );
+}
+
 /** Section heading on a tinted band, so the two parts of the profile stand out. */
 function SectionTitle({ icon, children }: { icon: string; children: string }) {
   const theme = useTheme();
@@ -179,16 +194,19 @@ export default function SchoolScreen() {
         </View>
         {custom.length < MAX_CUSTOM_ALLERGIES ? (
           <View style={styles.otherRow}>
-            <TextInput
-              value={otherAllergy}
-              onChangeText={setOtherAllergy}
-              onSubmitEditing={addOther}
-              placeholder="Khác, ví dụ: thịt vịt, kiwi…"
-              placeholderTextColor={theme.textSecondary}
-              returnKeyType="done"
-              maxLength={30}
-              style={[styles.other, { color: theme.text, borderColor: theme.border, backgroundColor: theme.backgroundElement }]}
-            />
+            <View style={styles.otherBox}>
+              <TextInput
+                value={otherAllergy}
+                onChangeText={setOtherAllergy}
+                onSubmitEditing={addOther}
+                placeholder="Khác, ví dụ: thịt vịt, kiwi…"
+                placeholderTextColor={theme.textSecondary}
+                returnKeyType="done"
+                maxLength={30}
+                style={[styles.other, { color: theme.text, borderColor: theme.border, backgroundColor: theme.backgroundElement }]}
+              />
+              {otherAllergy ? <ClearButton onPress={() => setOtherAllergy('')} /> : null}
+            </View>
             <Pressable
               onPress={addOther}
               disabled={!otherAllergy.trim()}
@@ -225,14 +243,7 @@ export default function SchoolScreen() {
             style={[styles.search, { color: theme.text, borderColor: theme.border, backgroundColor: theme.backgroundElement }]}
           />
           {boxText ? (
-            <Pressable
-              onPress={() => setQuery('')}
-              accessibilityRole="button"
-              accessibilityLabel="Xóa ô tìm kiếm"
-              hitSlop={8}
-              style={[styles.clear, { backgroundColor: theme.border }]}>
-              <ThemedText type="smallBold" style={styles.clearText}>✕</ThemedText>
-            </Pressable>
+            <ClearButton onPress={() => setQuery('')} />
           ) : null}
         </View>
       </View>
@@ -325,11 +336,12 @@ const styles = StyleSheet.create({
   sectionIcon: { fontSize: 18, lineHeight: 24 },
   sectionText: { fontSize: 17, lineHeight: 24, fontWeight: 700 },
   otherRow: { flexDirection: 'row', gap: Spacing.two, alignItems: 'center' },
+  otherBox: { flex: 1 },
   other: {
-    flex: 1,
     borderWidth: StyleSheet.hairlineWidth,
     borderRadius: 999,
-    paddingHorizontal: Spacing.three,
+    paddingLeft: Spacing.three,
+    paddingRight: Spacing.five + Spacing.two, // room for the clear button
     paddingVertical: Spacing.two,
     fontSize: 15,
   },
