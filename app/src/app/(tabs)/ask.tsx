@@ -10,6 +10,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { router, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { NoSchool } from '@/components/no-school';
@@ -62,26 +63,11 @@ export default function AskScreen() {
   const [remaining, setRemaining] = useState<number | null>(null);
   const scroll = useRef<ScrollView>(null);
 
-  // Local data was cleared (dev reset): forget the conversations too.
-  if (loaded && !school && Object.keys(chats).length) {
-    setChats({});
-    setRemaining(null);
-  }
-
-  if (!loaded) return <Screen>{null}</Screen>;
-  if (!school) {
-    return (
-      <Screen>
-        <NoSchool message="Chọn trường của con để hỏi trợ lý AI về thực đơn, dinh dưỡng và các món có thể gây dị ứng." />
-      </Screen>
-    );
-  }
-
-  const messages = chats[school.id] ?? [];
+  const messages = school ? (chats[school.id] ?? []) : [];
 
   const send = async (text: string) => {
     const question = text.trim();
-    if (!question || busy) return;
+    if (!school || !question || busy) return;
     const next: ChatMessage[] = [...messages, { role: 'user', content: question }];
     setChats((c) => ({ ...c, [school.id]: next }));
     setInput('');
@@ -100,6 +86,32 @@ export default function AskScreen() {
       setBusy(false);
     }
   };
+
+  // Opened from "Gợi ý bữa tối" on the Today tab: ask that question once, then drop it from the URL.
+  const { q } = useLocalSearchParams<{ q?: string }>();
+  const asked = useRef<string | null>(null);
+  useEffect(() => {
+    if (!q || !school || busy || asked.current === q) return;
+    asked.current = q;
+    send(q);
+    router.setParams({ q: undefined });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [q, school, busy]);
+
+  // Local data was cleared (dev reset): forget the conversations too.
+  if (loaded && !school && Object.keys(chats).length) {
+    setChats({});
+    setRemaining(null);
+  }
+
+  if (!loaded) return <Screen>{null}</Screen>;
+  if (!school) {
+    return (
+      <Screen>
+        <NoSchool message="Chọn trường của con để hỏi trợ lý AI về thực đơn, dinh dưỡng và các món có thể gây dị ứng." />
+      </Screen>
+    );
+  }
 
   return (
     <ThemedView style={styles.root}>

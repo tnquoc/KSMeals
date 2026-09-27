@@ -1,10 +1,11 @@
-import { StyleSheet, View } from 'react-native';
+import { router } from 'expo-router';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import type { Meal } from '@/lib/api';
-import { weekdayName } from '@/lib/dates';
+import { dayMonth, weekdayName } from '@/lib/dates';
 import { allergyHits, MEAL, MEAL_ICON, MEAL_ORDER } from '@/lib/labels';
 
 // Dishes worth naming in one line: the "what's for lunch" answer, not rice or water.
@@ -28,40 +29,54 @@ export function DaySummary({ meals, day, isToday, allergies }: { meals: Meal[]; 
     meal.meal_type === 'lunch' ? (isToday ? 'Trưa nay' : `Trưa ${weekdayName(day)}`) : `${MEAL[meal.meal_type]}${isToday ? ' hôm nay' : ''}`;
   const kcal = meals.reduce((sum, m) => sum + (m.nutrition?.kcal ?? 0), 0);
   const flagged = meals.reduce((sum, m) => sum + allergyHits(m, allergies).count, 0);
+  // The chat already knows the week's menus; this just asks the question parents have every afternoon.
+  const dinnerQuestion = isToday
+    ? 'Tối nay nên nấu gì cho bé để bù cho bữa trưa ở trường?'
+    : `Tối ${weekdayName(day)} ${dayMonth(day)} nên nấu gì cho bé để bù cho bữa trưa ở trường hôm đó?`;
 
   return (
     <View style={[styles.box, { backgroundColor: theme.backgroundSelected }]}>
-      <ThemedText style={styles.icon}>{MEAL_ICON[meal.meal_type]}</ThemedText>
-      <View style={styles.text}>
-        <ThemedText type="small" themeColor="textSecondary">
-          {when} con ăn
-        </ThemedText>
-        <ThemedText style={styles.headline}>{headline}</ThemedText>
-        <View style={styles.facts}>
-          {kcal ? (
-            <ThemedText type="small" themeColor="textSecondary">
-              {withDishes.length} bữa ở trường · ~{Math.round(kcal).toLocaleString('vi-VN')} kcal
-            </ThemedText>
-          ) : null}
-          {flagged ? (
-            <ThemedText type="smallBold" style={{ color: theme.danger }}>
-              ⛔ {flagged} món cần chú ý
-            </ThemedText>
-          ) : null}
+      <View style={styles.top}>
+        <ThemedText style={styles.icon}>{MEAL_ICON[meal.meal_type]}</ThemedText>
+        <View style={styles.text}>
+          <ThemedText type="small" themeColor="textSecondary">
+            {when} con ăn
+          </ThemedText>
+          <ThemedText style={styles.headline}>{headline}</ThemedText>
+          <View style={styles.facts}>
+            {kcal ? (
+              <ThemedText type="small" themeColor="textSecondary">
+                {withDishes.length} bữa ở trường · ~{Math.round(kcal).toLocaleString('vi-VN')} kcal
+              </ThemedText>
+            ) : null}
+            {flagged ? (
+              <ThemedText type="smallBold" style={{ color: theme.danger }}>
+                ⛔ {flagged} món cần chú ý
+              </ThemedText>
+            ) : null}
+          </View>
         </View>
       </View>
+      <Pressable
+        onPress={() => router.navigate({ pathname: '/ask', params: { q: dinnerQuestion } })}
+        accessibilityRole="button"
+        style={({ pressed }) => [styles.dinner, { backgroundColor: theme.backgroundElement, opacity: pressed ? 0.7 : 1 }]}>
+        <ThemedText type="smallBold" style={{ color: theme.accent }}>
+          🍲 Gợi ý bữa tối cho bé
+        </ThemedText>
+      </Pressable>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   box: {
-    flexDirection: 'row',
-    alignItems: 'center',
     gap: Spacing.three,
     borderRadius: Spacing.three,
     padding: Spacing.three,
   },
+  top: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three },
+  dinner: { alignItems: 'center', borderRadius: 999, paddingVertical: Spacing.two },
   icon: { fontSize: 36, lineHeight: 44 },
   text: { flex: 1, gap: 2 },
   headline: { fontSize: 19, lineHeight: 26, fontWeight: 700 },
