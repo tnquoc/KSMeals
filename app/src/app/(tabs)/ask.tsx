@@ -62,6 +62,12 @@ export default function AskScreen() {
   const [remaining, setRemaining] = useState<number | null>(null);
   const scroll = useRef<ScrollView>(null);
 
+  // Local data was cleared (dev reset): forget the conversations too.
+  if (loaded && !school && Object.keys(chats).length) {
+    setChats({});
+    setRemaining(null);
+  }
+
   if (!loaded) return <Screen>{null}</Screen>;
   if (!school) {
     return (

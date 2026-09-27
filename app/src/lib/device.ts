@@ -18,3 +18,8 @@ export async function getDeviceId(): Promise<string> {
   AsyncStorage.setItem(DEVICE_KEY, deviceId).catch(() => {});
   return deviceId;
 }
+
+/** Drop the cached id so the next call makes a new one (after local data was cleared). */
+export function forgetDeviceId() {
+  deviceId = null;
+}

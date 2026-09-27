@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 
 import { track } from '@/lib/analytics';
 import type { School } from '@/lib/api';
+import { forgetDeviceId } from '@/lib/device';
 
 const SCHOOL_KEY = 'ksmeals.school';
 const ALLERGIES_KEY = 'ksmeals.allergies';
@@ -14,6 +15,7 @@ type ProfileState = {
   loaded: boolean;
   setSchool: (s: School) => void;
   toggleAllergy: (id: string) => void;
+  resetAll: () => Promise<void>; // forget everything kept on the device, as for a new user
 };
 
 const ProfileContext = createContext<ProfileState>({
@@ -22,6 +24,7 @@ const ProfileContext = createContext<ProfileState>({
   loaded: false,
   setSchool: () => {},
   toggleAllergy: () => {},
+  resetAll: async () => {},
 });
 
 export function SchoolProvider({ children }: { children: ReactNode }) {
@@ -51,8 +54,16 @@ export function SchoolProvider({ children }: { children: ReactNode }) {
     track('allergies_set', school?.code, { count: next.length });
   };
 
+  const resetAll = async () => {
+    const keys = (await AsyncStorage.getAllKeys()).filter((k) => k.startsWith('ksmeals.'));
+    await AsyncStorage.multiRemove(keys);
+    forgetDeviceId();
+    setSchoolState(null);
+    setAllergies([]);
+  };
+
   return (
-    <ProfileContext.Provider value={{ school, allergies, loaded, setSchool, toggleAllergy }}>
+    <ProfileContext.Provider value={{ school, allergies, loaded, setSchool, toggleAllergy, resetAll }}>
       {children}
     </ProfileContext.Provider>
   );

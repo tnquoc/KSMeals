@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Link, router } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, DevSettings, Platform, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import { PageHeader } from '@/components/page-header';
 import { Screen } from '@/components/screen';
@@ -22,14 +22,6 @@ const place = (s: School) => s.address || WARD_NAME[s.ward];
 
 const FIRST_LIST = 20; // covered schools shown before the parent types anything
 const MAX_CUSTOM_ALLERGIES = 5;
-
-/** Clears everything KSMeals keeps on the device (school, allergies, requests, device id) and reloads. */
-async function resetAsNewUser() {
-  const keys = (await AsyncStorage.getAllKeys()).filter((k) => k.startsWith('ksmeals.'));
-  await AsyncStorage.multiRemove(keys);
-  if (Platform.OS === 'web') window.location.reload();
-  else DevSettings.reload();
-}
 
 /** Section heading on a tinted band, so the two parts of the profile stand out. */
 function SectionTitle({ icon, children }: { icon: string; children: string }) {
@@ -83,7 +75,7 @@ function RequestButton({ school, count, onDone }: { school: School; count?: numb
 
 export default function SchoolScreen() {
   const theme = useTheme();
-  const { school, setSchool, allergies, toggleAllergy } = useSchool();
+  const { school, setSchool, allergies, toggleAllergy, resetAll } = useSchool();
   const [schools, setSchools] = useState<School[]>([]);
   const [requested, setRequested] = useState<Record<string, number>>({});
   // null: the box shows the chosen school's name; ✕ or typing turns it into a search.
@@ -301,7 +293,15 @@ export default function SchoolScreen() {
         </Link>
         {__DEV__ ? (
           // Development builds only (Expo Go): start over as a brand-new user, e.g. to record a demo.
-          <Pressable onPress={resetAsNewUser} accessibilityRole="button">
+          <Pressable
+            onPress={async () => {
+              await resetAll();
+              setRequested({});
+              setQuery(null);
+              setOtherAllergy('');
+              router.navigate('/');
+            }}
+            accessibilityRole="button">
             <ThemedText type="small" style={{ color: theme.danger }}>
               [Dev] Xóa dữ liệu trên máy, mở lại như người dùng mới
             </ThemedText>
