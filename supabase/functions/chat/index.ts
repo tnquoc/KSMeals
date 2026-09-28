@@ -160,16 +160,29 @@ const MODELS = [LLM_MODEL, ...(Deno.env.get("LLM_FALLBACK_MODELS") ?? "gemini-3.
   .filter((m, i, all) => m && all.indexOf(m) === i);
 const RETRYABLE = new Set([429, 500, 503]);
 
+const ATTEMPT_MS = 25_000; // an overloaded model sometimes hangs instead of answering 503
+const BUDGET_MS = 45_000; // stop trying well before the app (60 s) and the platform give up
+
 /** One chat completion: each model once more after a short pause, then the next model. */
 async function complete(messages: { role: string; content: string }[]): Promise<Response> {
-  let last: Response | undefined;
+  const deadline = Date.now() + BUDGET_MS;
+  let last = new Response("timeout", { status: 503 });
   for (const model of MODELS) {
     for (let attempt = 0; attempt < 2; attempt++) {
-      last = await fetch(`${LLM_BASE_URL}chat/completions`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${GEMINI_API_KEY}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ model, temperature: 0.3, messages }),
-      });
+      const left = deadline - Date.now();
+      if (left < 3_000) return last;
+      try {
+        last = await fetch(`${LLM_BASE_URL}chat/completions`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${GEMINI_API_KEY}`, "Content-Type": "application/json" },
+          body: JSON.stringify({ model, temperature: 0.3, messages }),
+          signal: AbortSignal.timeout(Math.min(ATTEMPT_MS, left)),
+        });
+      } catch (e) {
+        console.error("llm", model, "timed out or failed", e);
+        last = new Response("timeout", { status: 503 });
+        continue;
+      }
       if (last.ok || !RETRYABLE.has(last.status)) return last;
       console.error("llm", model, last.status, (await last.text()).slice(0, 200));
       if (attempt === 0) await new Promise((r) => setTimeout(r, 1500));

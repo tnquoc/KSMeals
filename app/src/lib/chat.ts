@@ -11,11 +11,15 @@ export async function askAssistant(
   messages: ChatMessage[],
   allergies: string[] = [],
 ): Promise<{ reply: string; remaining?: number }> {
+  // The server gives up on the model after ~45 s; never leave the parent waiting longer than a minute.
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 60_000);
   const res = await fetch(`${SUPABASE_URL}/functions/v1/chat`, {
     method: 'POST',
     headers: { apikey: PUBLISHABLE_KEY, 'Content-Type': 'application/json' },
     body: JSON.stringify({ device_id: await getDeviceId(), school_id: schoolId, messages, allergies }),
-  });
+    signal: controller.signal,
+  }).finally(() => clearTimeout(timer));
   const data = await res.json().catch(() => ({}));
   if (data.reply) return { reply: data.reply, remaining: data.remaining };
   throw new Error(data.error ?? `HTTP ${res.status}`);
