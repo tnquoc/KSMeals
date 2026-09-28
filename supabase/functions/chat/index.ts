@@ -146,6 +146,38 @@ async function consume(deviceId: string, today: string): Promise<number> {
   return DAILY_LIMIT - used - 1;
 }
 
+/** Undo `consume` when no answer could be produced. */
+async function refund(deviceId: string, today: string, remaining: number) {
+  await db("chat_usage?on_conflict=device_id,date", {
+    method: "POST",
+    headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
+    body: JSON.stringify([{ device_id: deviceId, date: today, count: DAILY_LIMIT - remaining - 1 }]),
+  }).catch((e) => console.error("refund", e));
+}
+
+// Google's free models sometimes answer 503 "high demand" for a while; an older model usually still works.
+const MODELS = [LLM_MODEL, ...(Deno.env.get("LLM_FALLBACK_MODELS") ?? "gemini-3.1-flash-lite").split(",").map((m) => m.trim())]
+  .filter((m, i, all) => m && all.indexOf(m) === i);
+const RETRYABLE = new Set([429, 500, 503]);
+
+/** One chat completion: each model once more after a short pause, then the next model. */
+async function complete(messages: { role: string; content: string }[]): Promise<Response> {
+  let last: Response | undefined;
+  for (const model of MODELS) {
+    for (let attempt = 0; attempt < 2; attempt++) {
+      last = await fetch(`${LLM_BASE_URL}chat/completions`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${GEMINI_API_KEY}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ model, temperature: 0.3, messages }),
+      });
+      if (last.ok || !RETRYABLE.has(last.status)) return last;
+      console.error("llm", model, last.status, (await last.text()).slice(0, 200));
+      if (attempt === 0) await new Promise((r) => setTimeout(r, 1500));
+    }
+  }
+  return last!;
+}
+
 /** Menus and the allergen index of one school. Custom terms (typed by the parent) are matched here, in code. */
 function schoolContext(school: School, meals: Meal[], custom: string[], monday: string) {
   const lines = [
@@ -277,20 +309,13 @@ Deno.serve(async (req) => {
         `&status=eq.published&date=gte.${shift(monday, -7)}&date=lte.${shift(monday, 11)}&order=date`,
     ) as Meal[];
 
-    const res = await fetch(`${LLM_BASE_URL}chat/completions`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${GEMINI_API_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: LLM_MODEL,
-        temperature: 0.3,
-        messages: [
-          { role: "system", content: `${SYSTEM_PROMPT}\n\n${menuContext(chosen, others, meals, today, allergies, custom)}` },
-          ...history,
-        ],
-      }),
-    });
+    const messages = [
+      { role: "system", content: `${SYSTEM_PROMPT}\n\n${menuContext(chosen, others, meals, today, allergies, custom)}` },
+      ...history,
+    ];
+    const res = await complete(messages);
     if (!res.ok) {
-      console.error("llm", res.status, await res.text());
+      await refund(deviceId, today.iso, remaining); // the parent got no answer: don't count the question
       const busy = res.status === 429 || res.status === 503;
       return json({ error: "llm", reply: busy ? "Trợ lý đang quá tải, bạn thử lại sau ít phút nhé." : "Có lỗi khi trả lời, bạn thử lại sau nhé." }, 502);
     }
