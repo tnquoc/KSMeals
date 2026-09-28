@@ -19,7 +19,7 @@ from pipeline import config  # noqa: F401  (loads .env)
 from pipeline.store import Store
 
 VN = timezone(timedelta(hours=7))
-WEB_URL = os.getenv("WEB_URL", "https://tnquoc.github.io/KSMeals").rstrip("/")
+WEB_URL = os.getenv("WEB_URL", "https://ksmeals.com").rstrip("/")
 # Same ids and labels as pipeline/allergens.py and app/src/lib/labels.ts.
 ALLERGEN = {
     "crustacean": "Tôm, cua", "mollusc": "Mực, sò", "fish": "Cá", "egg": "Trứng", "milk": "Sữa",

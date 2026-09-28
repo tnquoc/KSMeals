@@ -4,7 +4,7 @@
 //
 // Usage (from app/): node scripts/school-pages.mjs [outDir=dist]
 // Env: EXPO_PUBLIC_SUPABASE_URL, EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY (read-only, public),
-//      EXPO_BASE_URL (/KSMeals on GitHub Pages), SITE_ORIGIN (https://tnquoc.github.io).
+//      SITE_ORIGIN (https://ksmeals.com), EXPO_BASE_URL (only when served under a sub-path).
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -12,7 +12,7 @@ const OUT = process.argv[2] ?? 'dist';
 const SUPABASE_URL = (process.env.EXPO_PUBLIC_SUPABASE_URL ?? '').replace(/\/+$/, '').replace(/\/rest\/v1$/, '');
 const KEY = process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 const BASE = (process.env.EXPO_BASE_URL ?? '').replace(/\/+$/, '');
-const ORIGIN = (process.env.SITE_ORIGIN ?? 'https://tnquoc.github.io').replace(/\/+$/, '');
+const ORIGIN = (process.env.SITE_ORIGIN ?? 'https://ksmeals.com').replace(/\/+$/, '');
 if (!SUPABASE_URL || !KEY) throw new Error('Missing EXPO_PUBLIC_SUPABASE_URL / EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY');
 
 // Same labels as src/lib/labels.ts; ward names come from the generated src/lib/wards.ts.

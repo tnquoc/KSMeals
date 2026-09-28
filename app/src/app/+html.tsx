@@ -2,7 +2,7 @@ import { ScrollViewStyleReset } from 'expo-router/html';
 import { type PropsWithChildren } from 'react';
 
 // Root HTML for the web build (rendered in Node at build time, no browser APIs here).
-// Links are relative so they work under the GitHub Pages base path (/KSMeals/).
+// Links are relative so the build also works under a sub-path (e.g. /KSMeals/ on github.io).
 export default function Root({ children }: PropsWithChildren) {
   return (
     <html lang="vi">

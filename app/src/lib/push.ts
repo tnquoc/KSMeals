@@ -35,7 +35,7 @@ function supported() {
 }
 
 async function registration(): Promise<ServiceWorkerRegistration> {
-  // Relative to the manifest, so it works under the GitHub Pages base path (/KSMeals/).
+  // Relative to the manifest, so it also works when the app is hosted under a sub-path.
   const base = (document.querySelector('link[rel="manifest"]') as HTMLLinkElement | null)?.href ?? location.href;
   await navigator.serviceWorker.register(new URL('sw.js', base).href);
   return navigator.serviceWorker.ready;

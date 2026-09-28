@@ -1,4 +1,5 @@
-# Build the Expo web app and publish it to GitHub Pages: https://<user>.github.io/KSMeals/
+# Build the Expo web app and publish it to GitHub Pages at the custom domain https://ksmeals.com/
+# (set in Settings → Pages; the old https://tnquoc.github.io/KSMeals/ links redirect there).
 # Also writes one static page per covered school (/truong/<code>/) plus sitemap.xml, so parents
 # find KSMeals from Google; rebuilt after every daily pipeline run to show the new menus.
 # The publishable key ends up in the public JS bundle; that is by design (RLS limits it to
@@ -43,7 +44,6 @@ jobs:
 
       - name: Export static web build
         env:
-          EXPO_BASE_URL: /${{ github.event.repository.name }}
           EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
           # Public contact shown on /privacy; a repository *variable*, change it any time and re-run
@@ -58,8 +58,7 @@ jobs:
 
       - name: School pages and sitemap
         env:
-          EXPO_BASE_URL: /${{ github.event.repository.name }}
-          SITE_ORIGIN: https://${{ github.repository_owner }}.github.io
+          SITE_ORIGIN: https://ksmeals.com
           EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
         run: node scripts/school-pages.mjs dist

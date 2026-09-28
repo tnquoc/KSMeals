@@ -1,6 +1,5 @@
-// Dynamic config on top of app.json. The web build for GitHub Pages is served from
-// https://<user>.github.io/KSMeals/, so it needs that base path; local dev and native
-// builds leave EXPO_BASE_URL unset.
+// Dynamic config on top of app.json. The web app is served from the root of https://ksmeals.com/;
+// EXPO_BASE_URL is only needed to host it under a sub-path (e.g. https://<user>.github.io/<repo>/).
 module.exports = ({ config }) => ({
   ...config,
   experiments: {
