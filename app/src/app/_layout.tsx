@@ -4,7 +4,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import { useColorScheme } from 'react-native';
 
-import { track } from '@/lib/analytics';
+import { track, visitSource } from '@/lib/analytics';
 import { SchoolProvider, useSchool } from '@/lib/school-store';
 
 SplashScreen.preventAutoHideAsync();
@@ -14,7 +14,7 @@ function WhenProfileLoaded() {
   useEffect(() => {
     if (!loaded) return;
     SplashScreen.hideAsync();
-    track('app_open', school?.code);
+    track('app_open', school?.code, visitSource());
     // Once per launch, as soon as the saved profile is read.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loaded]);
