@@ -29,6 +29,6 @@ Plan and progress: `roadmap.md`. Setup and commands: `README.md`. App-specific r
 ## Next up (see roadmap.md)
 1. First YouTube Short is live (channel @KSMeals); read `pipeline.stats` weekly (key metric: devices active 3+ days/week; dev builds and automated browsers are no longer tracked, events before 2026-09-28 include Claude's test sessions).
 2. Google Play: personal account created, waiting for identity verification; then choose the package name, Expo account, EAS build, closed testing (12 testers × 14 days, via a self-join Google Group). Apple later.
-3. Domain ksmeals.com is live (DNS on Cloudflare, A records to GitHub Pages). Search Console: add a property for https://ksmeals.com/ and submit sitemap.xml (the old github.io property was verified by app/public/google224a85ab1762ca0f.html).
+3. Domain ksmeals.com is live (DNS on Cloudflare, A records to GitHub Pages). Search Console: property https://ksmeals.com/ verified (app/public/google224a85ab1762ca0f.html), sitemap.xml submitted 2026-09-29 (83 URLs, success); check "Hiệu suất" in a few weeks. YouTube Shorts paused by the owner (Short 2: 17% stayed to watch).
 4. Allergy 2 levels (red "Có" from dish names vs orange "Thường có" from recipes, per-dish ingredients) — postponed by the owner.
 5. Nhà trẻ/mẫu giáo variants; tray photos with children's faces are not blurred (owner's decision).
