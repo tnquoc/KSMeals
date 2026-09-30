@@ -4,7 +4,7 @@ import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
 import { DayMenu } from '@/components/day-menu';
 import { DaySummary } from '@/components/day-summary';
-import { NoSchool } from '@/components/no-school';
+import { SchoolStart } from '@/components/no-school';
 import { PageHeader } from '@/components/page-header';
 import { SchoolPill } from '@/components/school-pill';
 import { ShareButton } from '@/components/share-button';
@@ -56,8 +56,9 @@ export default function TodayScreen() {
   if (!loaded) return <Screen>{null}</Screen>;
   if (!school) {
     return (
-      <Screen>
-        <NoSchool />
+      // Its own key: after a school is picked, the menu starts at the top instead of the list's scroll position.
+      <Screen key="start">
+        <SchoolStart />
       </Screen>
     );
   }
