@@ -29,11 +29,10 @@ def main():
         return
     names = {s["code"]: s["name"] for s in store.select("schools", select="code,name")}
 
-    # Crawlers and link previews that run the web app are flagged on app_open (props.bot): drop devices
-    # that were only ever seen as a bot (a real browser can be flagged once, e.g. by a preview, then used).
-    opens = [r for r in rows if r["name"] == "app_open"]
-    bots = ({r["device_id"] for r in opens if (r["props"] or {}).get("bot")}
-            - {r["device_id"] for r in opens if not (r["props"] or {}).get("bot")})
+    # Crawlers and link previews that run the web app are flagged on app_open (props.bot): drop their devices.
+    # A real browser keeps one user agent, so a device flagged even once is a crawler switching user agents
+    # (seen 2026-10-01: one device id opening ?school= links of schools in different districts all day).
+    bots = {r["device_id"] for r in rows if r["name"] == "app_open" and (r["props"] or {}).get("bot")}
     rows = [r for r in rows if r["device_id"] not in bots]
     if bots:
         print(f"(skipped {len(bots)} bot devices)")
