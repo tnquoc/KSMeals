@@ -5,7 +5,7 @@ from pathlib import Path
 
 from pipeline.addresses import parse_address
 from pipeline.allergens import detect
-from pipeline.crawl import parse_post
+from pipeline.crawl import MIN_BODY_TEXT, body_text, parse_post
 from pipeline.dates import parse_slug_range, parse_title_range, school_week_monday
 from pipeline.process import interpret, tray_meal_type
 from pipeline.discover import parse_schools, parse_ward_codes, parse_ward_names
@@ -249,6 +249,18 @@ def test_post_layouts():
         assert [Path(u).suffix for u in post["doc_urls"]] == doc_exts, (pid, post["doc_urls"])
         assert post["title"], pid
         assert not any("?w=" in u for u in post["image_urls"]), pid  # full-size originals
+
+
+def test_menu_typed_into_post():
+    # A menu table typed into the post: no image or file, read from the text (merged cells as they come).
+    html = (FIXTURES / "posts" / "888573.html").read_text(encoding="utf-8")
+    post = parse_post(html, "https://x.hcm.edu.vn/thuc-don-tuan/thuc-don-tuan-4/ct/76732/888573")
+    assert not post["image_urls"] and not post["doc_urls"]
+    text = body_text(html)
+    assert "Thứ Hai 21/9/2026 | Cháo hải sản | Gà nấu nấm đông cô" in text, text
+    assert "Tin cùng chuyên mục" not in text  # related posts stay out
+    # A post with only a title (the school forgot the menu): nothing to read.
+    assert len(body_text((FIXTURES / "posts" / "891308.html").read_text(encoding="utf-8"))) < MIN_BODY_TEXT
 
 
 def test_post_metadata():

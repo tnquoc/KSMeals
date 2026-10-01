@@ -3,6 +3,7 @@
 Menus come as body images, or attached PDF/Word/Excel files. PDFs are rendered to
 page images; .docx/.xlsx are converted to text. Legacy .doc/.xls are first converted to
 .docx/.xlsx with LibreOffice when it is installed (the daily workflow installs it).
+Some schools type the menu (often a table) straight into the post: that text is read instead.
 
 Only records new posts (status pending) in Supabase; downloading and OCR happen in
 process.py, so a run that stops early can resume anywhere from the database alone.
@@ -91,6 +92,29 @@ def parse_post(html: str, url: str) -> dict:
             "image_urls": images, "doc_urls": docs, "kind": kind}
 
 
+MIN_BODY_TEXT = 80  # shorter post text is a caption or a signature, not a menu
+NO_CONTENT = "no images, documents or text in post"
+
+
+def body_text(html: str) -> str:
+    """The post's own text, tables as rows of cells separated by |: some schools type the menu
+    straight into the post instead of attaching an image or a file."""
+    content = BeautifulSoup(html, "lxml").select_one(".qicontentdetail")
+    if content is None:
+        return ""
+    for table in content.find_all("table"):
+        rows = []
+        for tr in table.find_all("tr"):
+            cells = [" ".join(c.get_text(" ").split()) for c in tr.find_all(["td", "th"])]
+            while cells and not cells[-1]:
+                cells.pop()
+            if any(cells):
+                rows.append(" | ".join(cells))
+        table.replace_with("\n" + "\n".join(rows) + "\n")
+    lines = (" ".join(line.split()) for line in content.get_text("\n").splitlines())
+    return "\n".join(line for line in lines if line)
+
+
 def docx_to_text(data: bytes) -> str:
     import docx
 
@@ -155,8 +179,15 @@ def pdf_to_images(data: bytes) -> list[bytes]:
 
 
 async def fetch_contents(f: Fetcher, post: dict) -> tuple[list[bytes], str, str | None]:
-    """Download a post's media for the LLM: (images incl. rendered PDF pages, document text, error)."""
+    """Download a post's media for the LLM: (images incl. rendered PDF pages, document text, error).
+    A post without images or files is read from its own text instead."""
     images, texts, error = [], [], None
+    if not post["image_urls"] and not post["doc_urls"]:
+        html = await f.get_text(post["url"])
+        text = body_text(html) if html else ""
+        if html and len(text) < MIN_BODY_TEXT:
+            return [], "", NO_CONTENT
+        return [], text, None
     for url in post["image_urls"]:
         data = await f.get_bytes(url)
         if data:
@@ -203,8 +234,8 @@ async def crawl_school(f: Fetcher, code: str, since: date, known: set) -> list[d
         post = {"school_code": code, "post_id": pid, "url": url, **parse_post(html, url),
                 "status": "pending", "error": None}
         post["published_at"] = post["published_at"] or lastmod.isoformat()
-        if not post["image_urls"] and not post["doc_urls"]:
-            post["status"], post["error"] = "failed", "no images or documents in post"
+        if not post["image_urls"] and not post["doc_urls"] and len(body_text(html)) < MIN_BODY_TEXT:
+            post["status"], post["error"] = "failed", NO_CONTENT
         posts.append(post)
     return posts
 

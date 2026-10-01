@@ -97,9 +97,11 @@ class Store:
         retry_legacy: also posts that failed only because .doc/.xls could not be read yet."""
         statuses = "pending,needs_review" if retry_review else "pending"
         legacy = ",and(status.eq.failed,error.like.legacy*)" if retry_legacy else ""
+        # Posts with no images or files, failed before their own text was read: one more go (2026-10-01).
+        no_media = ',and(status.eq.failed,error.eq."no images or documents in post")'
         rows = self.select(
             "raw_posts", select="*,schools(code)", order="published_at.asc",
-            **{"or": f"(status.in.({statuses}),and(status.eq.failed,error.like.ocr:*){legacy})"},
+            **{"or": f"(status.in.({statuses}),and(status.eq.failed,error.like.ocr:*){legacy}{no_media})"},
         )
         for r in rows:
             r["school_code"] = r.pop("schools")["code"]

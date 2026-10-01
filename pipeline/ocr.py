@@ -101,11 +101,11 @@ def make_client() -> OpenAI:
 
 def extract_menu(images: list[bytes], title: str = "", published_at: date | None = None,
                  text: str = "", client: OpenAI | None = None, model: str = config.LLM_MODEL) -> dict:
-    """Images and/or text (from Word/Excel attachments) -> menu JSON."""
+    """Images and/or text (Word/Excel attachments, or a menu typed into the post) -> menu JSON."""
     client = client or make_client()
     context = f"Post title: {title or '-'}\nPublished: {published_at or '-'}"
     if text:
-        context += f"\n\nAttached document text (table cells separated by |):\n{text[:20000]}"
+        context += f"\n\nMenu text from the post or its attached documents (table cells separated by |):\n{text[:20000]}"
     content = [{"type": "text", "text": context}]
     content += [{"type": "image_url", "image_url": {"url": image_to_data_url(b)}} for b in images]
 
