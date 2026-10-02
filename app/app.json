@@ -2,12 +2,14 @@
   "expo": {
     "name": "KSMeals",
     "slug": "ksmeals",
+    "owner": "tnquocs-team",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "ksmeals",
     "userInterfaceStyle": "automatic",
     "android": {
+      "package": "com.ksmeals.app",
       "adaptiveIcon": {
         "backgroundColor": "#1F7A4D",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -38,6 +40,11 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "22edf6f0-548e-45cb-b3f9-b63d3cd44071"
+      }
     }
   }
 }
