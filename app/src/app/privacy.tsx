@@ -60,6 +60,7 @@ const SECTIONS: { title: string; body: string[] }[] = [
     title: 'Xóa dữ liệu, gỡ nội dung, liên hệ',
     body: [
       'Để xóa dữ liệu trên máy chủ, bấm "Hiện mã thiết bị" bên dưới và gửi mã đó tới email liên hệ (làm việc này trước khi xóa dữ liệu trên máy, vì sau đó mã thiết bị sẽ đổi). Nhà trường hoặc phụ huynh muốn gỡ một thực đơn hay hình ảnh cũng liên hệ qua email này.',
+      'Khi nhận được yêu cầu, KSMeals xóa trong vòng 30 ngày mọi dữ liệu trên máy chủ gắn với mã thiết bị đó: thống kê sử dụng, số câu hỏi AI đã đếm, các yêu cầu "Báo tôi khi có" và đăng ký nhắc thực đơn. KSMeals không giữ lại bản sao. Nhật ký máy chủ của nhà cung cấp hạ tầng (GitHub Pages, Supabase) do họ tự xóa theo thời hạn của họ.',
     ],
   },
 ];

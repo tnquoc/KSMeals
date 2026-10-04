@@ -16,7 +16,7 @@ Plan and progress: `roadmap.md`. Setup and commands: `README.md`. App-specific r
 - Morning reminders: Web Push (`app/public/sw.js`, `app/src/lib/push.ts`, table `push_subscriptions` from migration 0010), sent by `pipeline/push.py` from `push.yml` at 06:30 VN on school days (`--dry-run` to preview).
 - `supabase/functions/chat` (Edge Function, Gemini). Deploy: token `SUPABASE_ACCESS_TOKEN` in `.env` (scoped, expires ~2026-12-25), `npx supabase@2.118.0 functions deploy chat --project-ref <ref from SUPABASE_URL> --no-verify-jwt --use-api`. No logs command: debug by temporarily returning error details.
 - `app/` Expo SDK 57 + Expo Router: tabs in `src/app/(tabs)` (index, week, ask, school), `/privacy` outside. Reads Supabase REST with the publishable key; anonymous events via RPC `track`.
-- Local tools: `uv run python -m pipeline.devserver` (viewer + review at 127.0.0.1:8765), `pipeline.demand`, `pipeline.stats`, `pipeline.addresses`, `scripts/make_icons.py build shield_steam`.
+- Local tools: `uv run python -m pipeline.devserver` (viewer + review at 127.0.0.1:8765), `pipeline.demand`, `pipeline.stats`, `pipeline.forget <device-id>` (data deletion requests, privacy page promises 30 days), `pipeline.addresses`, `scripts/make_icons.py build shield_steam`.
 
 ## Gotchas
 - Gemini free tier: `gemini-3.5-flash` = 20 req/day, so the default is `gemini-3.5-flash-lite`; chat and pipeline share the quota (chat limit `CHAT_DAILY_LIMIT`, default 20).
