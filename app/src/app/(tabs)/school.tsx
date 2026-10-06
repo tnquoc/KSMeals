@@ -107,6 +107,7 @@ export default function SchoolScreen() {
       {showPicker ? (
         <SchoolPicker
           key={pickerKey}
+          source="profile"
           schools={schools}
           error={error}
           current={current}

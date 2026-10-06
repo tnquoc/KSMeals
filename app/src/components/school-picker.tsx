@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import { ClearButton } from '@/components/clear-button';
@@ -65,13 +65,24 @@ type Props = {
   current?: School | null; // left out of the list; schools in its ward come first
   onCancel?: () => void; // "Giữ trường hiện tại"
   autoFocus?: boolean;
+  source: 'home' | 'profile'; // where the picker is shown, for the search event
 };
 
 /** Search box + list of schools: covered ones can be chosen, the others can be asked for. */
-export function SchoolPicker({ schools, error, onChoose, current, onCancel, autoFocus }: Props) {
+export function SchoolPicker({ schools, error, onChoose, current, onCancel, autoFocus, source }: Props) {
   const theme = useTheme();
   const [query, setQuery] = useState('');
   const [requested, setRequested] = useState<Record<string, number>>({});
+  const searched = useRef(false);
+
+  const onQuery = (text: string) => {
+    setQuery(text);
+    // Once per picker: someone typed. Only the fact is sent, never the text.
+    if (text.trim() && !searched.current) {
+      searched.current = true;
+      track('school_search', current?.code, { from: source });
+    }
+  };
 
   useEffect(() => {
     AsyncStorage.getItem(REQUESTED_KEY)
@@ -106,7 +117,7 @@ export function SchoolPicker({ schools, error, onChoose, current, onCancel, auto
       <View>
         <TextInput
           value={query}
-          onChangeText={setQuery}
+          onChangeText={onQuery}
           placeholder="Tìm trường của con…"
           placeholderTextColor={theme.textSecondary}
           autoCorrect={false}

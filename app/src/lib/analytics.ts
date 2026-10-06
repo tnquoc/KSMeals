@@ -19,7 +19,8 @@ export type EventName =
   | 'school_requested'
   | 'share'
   | 'push_on'
-  | 'push_off';
+  | 'push_off'
+  | 'school_search';
 
 export function track(name: EventName, schoolCode?: string | null, props: Record<string, string | number | boolean> = {}) {
   if (!SUPABASE_URL || !PUBLISHABLE_KEY) return;

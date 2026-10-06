@@ -43,6 +43,7 @@ export function SchoolStart() {
         </ThemedText>
       </ThemedView>
       <SchoolPicker
+        source="home"
         schools={schools}
         error={error}
         onChoose={(s) => {
