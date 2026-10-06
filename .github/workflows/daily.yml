@@ -6,6 +6,7 @@ name: Daily pipeline
 on:
   schedule:
     - cron: "0 22 * * *"  # 05:00 Vietnam time (UTC+7); GitHub may start it a little late
+    - cron: "0 4 * * *"   # 11:00 again: many schools post the new week's menu on Monday morning
   workflow_dispatch:
     inputs:
       scope:
