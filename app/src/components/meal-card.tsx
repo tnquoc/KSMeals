@@ -105,10 +105,12 @@ export function MealCard({ meal }: { meal: Meal }) {
 
         {meal.ai_note ? <ThemedText type="small" style={styles.note}>{meal.ai_note}</ThemedText> : null}
 
-        {meal.allergens.length ? (
+        {/* Once the parent has set allergies, the red alerts above already cover them: the yellow
+            summary is only for parents who have not set any (it is also what nudges them to). */}
+        {meal.allergens.length && !allergies.length ? (
           <View style={styles.chips}>
             <ThemedText type="small" themeColor="textSecondary" style={styles.chipsLabel}>
-              ⚠️ Có thể chứa:
+              ⚠️ Có thể chứa thành phần gây dị ứng:
             </ThemedText>
             {meal.allergens.map((a) => (
               <View key={a} style={[styles.chip, { backgroundColor: theme.warnSoft }]}>
