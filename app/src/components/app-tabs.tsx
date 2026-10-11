@@ -11,6 +11,7 @@ export default function AppTabs() {
     <NativeTabs
       backgroundColor={colors.backgroundElement}
       indicatorColor={colors.backgroundSelected}
+      labelVisibilityMode="labeled"
       labelStyle={{ selected: { color: colors.accent } }}>
       <NativeTabs.Trigger name="index">
         <NativeTabs.Trigger.Label>Hôm nay</NativeTabs.Trigger.Label>
