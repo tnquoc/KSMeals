@@ -139,7 +139,9 @@ export default function AskScreen() {
   return (
     <ThemedView style={styles.root}>
       <SafeAreaView edges={['top']} style={styles.root}>
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.root}>
+        {/* Android is edge-to-edge, so the window no longer resizes for the keyboard: pad on both platforms.
+            The offset is the safe-area padding above, since the view measures itself from its parent. */}
+        <KeyboardAvoidingView behavior="padding" keyboardVerticalOffset={insets.top} style={styles.root}>
           <ScrollView
             ref={scroll}
             contentContainerStyle={styles.content}
