@@ -3,6 +3,7 @@ import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
 import { DayMenu, MenuSources } from '@/components/day-menu';
 import { LoadFailed } from '@/components/load-failed';
+import { MenuNotes } from '@/components/menu-notes';
 import { NoSchool } from '@/components/no-school';
 import { PageHeader } from '@/components/page-header';
 import { SchoolPill } from '@/components/school-pill';
@@ -13,7 +14,7 @@ import { useMeals } from '@/hooks/use-meals';
 import { useTheme } from '@/hooks/use-theme';
 import { track } from '@/lib/analytics';
 import { addDays, dayMonth, displayWeek, isSameDay, iso, mondayOf, weekDays, weekdayName } from '@/lib/dates';
-import { allergyHits, DISCLAIMER } from '@/lib/labels';
+import { allergyHits } from '@/lib/labels';
 import { useSchool } from '@/lib/school-store';
 
 function NavButton({ label, onPress }: { label: string; onPress: () => void }) {
@@ -106,7 +107,7 @@ export default function WeekScreen() {
           <MenuSources posts={weekPosts} title="Thực đơn gốc cả tuần của trường" />
         </View>
       ) : null}
-      <ThemedText type="small" themeColor="textSecondary">{DISCLAIMER}</ThemedText>
+      <MenuNotes />
     </Screen>
   );
 }

@@ -7,7 +7,7 @@ import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import type { Meal, Nutrition } from '@/lib/api';
-import { ALLERGEN, allergenNames, allergyHits, COURSE, dishIcon, MEAL, MEAL_ICON, MEAL_TINT } from '@/lib/labels';
+import { allergenNames, allergyHits, COURSE, dishIcon, MEAL, MEAL_ICON, MEAL_TINT } from '@/lib/labels';
 import { useSchool } from '@/lib/school-store';
 
 /** Share of the meal's energy from protein, fat and carbs, with grams as direct labels. */
@@ -104,23 +104,6 @@ export function MealCard({ meal }: { meal: Meal }) {
         {n?.kcal ? <MacroBar n={n} /> : null}
 
         {meal.ai_note ? <ThemedText type="small" style={styles.note}>{meal.ai_note}</ThemedText> : null}
-
-        {/* Once the parent has set allergies, the red alerts above already cover them: the yellow
-            summary is only for parents who have not set any (it is also what nudges them to). */}
-        {meal.allergens.length && !allergies.length ? (
-          <View style={styles.chips}>
-            <ThemedText type="small" themeColor="textSecondary" style={styles.chipsLabel}>
-              ⚠️ Có thể chứa thành phần gây dị ứng:
-            </ThemedText>
-            {meal.allergens.map((a) => (
-              <View key={a} style={[styles.chip, { backgroundColor: theme.warnSoft }]}>
-                <ThemedText type="smallBold" style={{ color: theme.warn, fontSize: 12 }}>
-                  {ALLERGEN[a] ?? a}
-                </ThemedText>
-              </View>
-            ))}
-          </View>
-        ) : null}
 
         {meal.tray_image_urls.length ? (
           <ThemedText type="small" themeColor="textSecondary" style={styles.traysLabel}>
@@ -241,24 +224,9 @@ const styles = StyleSheet.create({
   note: {
     marginTop: Spacing.one,
   },
-  chips: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing.one,
-    marginTop: Spacing.two,
-  },
-  chipsLabel: {
-    fontSize: 12,
-    alignSelf: 'center',
-  },
   traysLabel: {
     fontSize: 12,
     marginTop: Spacing.two,
-  },
-  chip: {
-    borderRadius: 999,
-    paddingHorizontal: Spacing.two,
-    paddingVertical: 2,
   },
   trays: {
     gap: Spacing.two,

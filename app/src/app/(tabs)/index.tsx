@@ -1,10 +1,11 @@
-import { useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
 import { DayMenu } from '@/components/day-menu';
 import { DaySummary } from '@/components/day-summary';
 import { LoadFailed } from '@/components/load-failed';
+import { MenuNotes } from '@/components/menu-notes';
 import { SchoolStart } from '@/components/no-school';
 import { PageHeader } from '@/components/page-header';
 import { SchoolPill } from '@/components/school-pill';
@@ -28,7 +29,7 @@ import {
   weekdayName,
   weekdayShort,
 } from '@/lib/dates';
-import { allergyHits, DISCLAIMER } from '@/lib/labels';
+import { allergyHits } from '@/lib/labels';
 import { useSchool } from '@/lib/school-store';
 
 export default function TodayScreen() {
@@ -130,9 +131,18 @@ export default function TodayScreen() {
             <ShareButton school={school} day={selected} meals={meals.filter((m) => m.date === iso(selected))} />
           ) : null}
           <DayMenu meals={meals.filter((m) => m.date === iso(selected))} sources={sources} />
+          {/* The only hint that alerts exist, for parents who have not set any allergy yet. */}
+          {!allergies.length && meals.some((m) => m.date === iso(selected) && m.dishes.length) ? (
+            <Pressable onPress={() => router.navigate('/school')} accessibilityRole="link">
+              <ThemedText type="small" themeColor="textSecondary">
+                Con bị dị ứng?{' '}
+                <ThemedText type="small" style={{ color: theme.accent }}>Chọn ở Hồ sơ để app tô đỏ món cần chú ý ›</ThemedText>
+              </ThemedText>
+            </Pressable>
+          ) : null}
         </>
       )}
-      <ThemedText type="small" themeColor="textSecondary">{DISCLAIMER}</ThemedText>
+      <MenuNotes />
     </Screen>
   );
 }

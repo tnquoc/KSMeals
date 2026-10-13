@@ -184,8 +184,9 @@ export function allergyHits(
 
 export const allergenNames = (ids: string[]) => ids.map((a) => ALLERGEN[a] ?? a).join(', ');
 
-export const DISCLAIMER =
-  'Dinh dưỡng là ước tính bằng AI cho một suất ăn thông thường theo độ tuổi. ' +
-  'Bột đường gồm cả tinh bột và đường (kể cả đường trong sữa, bánh ngọt). ' +
-  'Nhãn vàng “Có thể chứa thành phần gây dị ứng” là các nhóm thường gây dị ứng, được dò theo tên món và nguyên liệu ' +
-  'thường dùng, nên có thể thiếu hoặc thừa. Nếu con bị dị ứng, hãy xác nhận với nhà trường.';
+/** Shown under every menu, one line each. */
+export const NOTES = [
+  'Dinh dưỡng là ước tính bằng AI cho một suất ăn theo độ tuổi.',
+  'Bột đường gồm cả tinh bột và đường (kể cả trong sữa, bánh ngọt).',
+  'Cảnh báo dị ứng dò theo tên món và nguyên liệu thường dùng nên có thể thiếu hoặc thừa. Hãy xác nhận với nhà trường.',
+];
