@@ -96,7 +96,7 @@ export async function fetchSchoolByCode(code: string): Promise<School | null> {
   return rows[0] ?? null;
 }
 
-/** "Báo tôi khi có": records the request, returns how many devices asked for this school. */
+/** "Yêu cầu thêm trường này": records the request, returns how many devices asked for this school. */
 export async function requestSchool(deviceId: string, code: string): Promise<number> {
   const { url, key } = config();
   const res = await fetch(`${url}/rest/v1/rpc/request_school`, {

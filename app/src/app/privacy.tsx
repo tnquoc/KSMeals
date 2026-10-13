@@ -25,7 +25,7 @@ const SECTIONS: { title: string; body: string[] }[] = [
   {
     title: 'Lưu trên thiết bị của bạn',
     body: [
-      'Trường đã chọn, danh sách dị ứng của con, các trường bạn đã bấm "Báo tôi khi có", và một mã thiết bị.',
+      'Trường đã chọn, danh sách dị ứng của con, các trường bạn đã bấm "Yêu cầu thêm trường này", và một mã thiết bị.',
       'Mã thiết bị là một chuỗi ngẫu nhiên do ứng dụng tự tạo ở lần mở đầu tiên. Mã không lấy từ số điện thoại, IMEI hay tài khoản nào, nên KSMeals không biết máy đó là của ai. Mã chỉ dùng để giới hạn số câu hỏi AI mỗi ngày và để biết một máy có quay lại dùng ứng dụng hay không.',
       'Những thông tin này bị xóa khi bạn bấm "Xóa dữ liệu trên máy này" ở tab Hồ sơ, gỡ ứng dụng hoặc xóa dữ liệu trình duyệt.',
     ],
@@ -35,8 +35,7 @@ const SECTIONS: { title: string; body: string[] }[] = [
     body: [
       'Thống kê sử dụng: mã thiết bị, tên sự kiện (mở ứng dụng, xem ngày/tuần, chia sẻ, dùng trợ lý AI...), mã trường và hệ điều hành. Trên web, kèm thêm tên trang đã dẫn bạn tới KSMeals (chỉ tên miền như youtube.com hay google.com, không có đường dẫn cụ thể) và dấu hiệu lượt mở là do máy tự động (bot) hay không. Không kèm nội dung câu hỏi.',
       'Khi dùng "Hỏi AI": câu hỏi, mã trường và các nhóm dị ứng bạn đã chọn được gửi tới máy chủ KSMeals (Supabase, Singapore) và Google Gemini để tạo câu trả lời. KSMeals không lưu nội dung câu hỏi, chỉ đếm số câu mỗi ngày để giới hạn. Google xử lý dữ liệu theo điều khoản Gemini API và có thể dùng dữ liệu gửi qua gói miễn phí để cải thiện sản phẩm. Vì vậy, đừng nhập tên hay thông tin cá nhân của con vào ô hỏi.',
-      'Khi bấm "Báo tôi khi có": mã thiết bị và mã trường.',
-      'Khi bật "Nhắc thực đơn mỗi sáng": địa chỉ nhận thông báo do trình duyệt tạo ra (một đường dẫn ngẫu nhiên, không chứa thông tin cá nhân), mã thiết bị, mã trường và các nhóm dị ứng bạn đã chọn, để gửi đúng thực đơn và lời nhắc. Thông báo đi qua dịch vụ đẩy thông báo của trình duyệt (Google, Apple hoặc Mozilla). Tắt nhắc hoặc xóa dữ liệu trên máy sẽ xóa ngay các thông tin này trên máy chủ.',
+      'Khi bấm "Yêu cầu thêm trường này": mã thiết bị và mã trường.',
       'Như mọi trang web, các nhà cung cấp hạ tầng (GitHub Pages, Supabase) tự ghi địa chỉ IP và loại trình duyệt vào nhật ký máy chủ để vận hành và chống lạm dụng. KSMeals không lưu địa chỉ IP vào dữ liệu thống kê.',
     ],
   },
@@ -60,7 +59,7 @@ const SECTIONS: { title: string; body: string[] }[] = [
     title: 'Xóa dữ liệu, gỡ nội dung, liên hệ',
     body: [
       'Để xóa dữ liệu trên máy chủ, bấm "Hiện mã thiết bị" bên dưới và gửi mã đó tới email liên hệ (làm việc này trước khi xóa dữ liệu trên máy, vì sau đó mã thiết bị sẽ đổi). Nhà trường hoặc phụ huynh muốn gỡ một thực đơn hay hình ảnh cũng liên hệ qua email này.',
-      'Khi nhận được yêu cầu, KSMeals xóa trong vòng 30 ngày mọi dữ liệu trên máy chủ gắn với mã thiết bị đó: thống kê sử dụng, số câu hỏi AI đã đếm, các yêu cầu "Báo tôi khi có" và đăng ký nhắc thực đơn. KSMeals không giữ lại bản sao. Nhật ký máy chủ của nhà cung cấp hạ tầng (GitHub Pages, Supabase) do họ tự xóa theo thời hạn của họ.',
+      'Khi nhận được yêu cầu, KSMeals xóa trong vòng 30 ngày mọi dữ liệu trên máy chủ gắn với mã thiết bị đó: thống kê sử dụng, số câu hỏi AI đã đếm và các yêu cầu thêm trường. KSMeals không giữ lại bản sao. Nhật ký máy chủ của nhà cung cấp hạ tầng (GitHub Pages, Supabase) do họ tự xóa theo thời hạn của họ.',
     ],
   },
 ];

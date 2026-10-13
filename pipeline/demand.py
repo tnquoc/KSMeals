@@ -1,4 +1,4 @@
-"""Which unsupported schools parents asked for ("Báo tôi khi có"), and whether we can cover them.
+"""Which unsupported schools parents asked for ("Yêu cầu thêm trường này"), and whether we can cover them.
 
 A requested school is worth adding when its website posts menus (coverage status from survey.py:
 regular or active). --add appends those to data/tracked_schools.txt so the daily pipeline crawls them.

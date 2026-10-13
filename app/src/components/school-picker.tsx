@@ -51,7 +51,7 @@ function RequestButton({ school, count, onDone }: { school: School; count?: numb
         <ActivityIndicator size="small" />
       ) : (
         <ThemedText type="smallBold" style={{ color: theme.accent }}>
-          {failed ? 'Chưa gửi được, bấm để thử lại' : '🔔 Báo tôi khi có'}
+          {failed ? 'Chưa gửi được, bấm để thử lại' : 'Yêu cầu thêm trường này'}
         </ThemedText>
       )}
     </Pressable>

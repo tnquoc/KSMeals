@@ -8,6 +8,11 @@ import { track } from '@/lib/analytics';
 import { disablePush, enablePush, pushState, type PushState } from '@/lib/push';
 import { useSchool } from '@/lib/school-store';
 
+// Off since 2026-10-14: reminders only worked in browsers (Web Push) and nobody switched them on.
+// The sender (pipeline/push.py, push.yml) is untouched. Reminders for both apps would rather be
+// local notifications scheduled on the device, which need no push service.
+const ENABLED = false;
+
 /** "Nhắc thực đơn mỗi sáng" switch (web app only; hidden where Web Push is not available). */
 export function ReminderCard() {
   const theme = useTheme();
@@ -17,10 +22,10 @@ export function ReminderCard() {
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
-    pushState().then(setState).catch(() => setState('unsupported'));
+    if (ENABLED) pushState().then(setState).catch(() => setState('unsupported'));
   }, []);
 
-  if (!school || !state || state === 'unsupported') return null;
+  if (!ENABLED || !school || !state || state === 'unsupported') return null;
 
   const toggle = async () => {
     setBusy(true);
