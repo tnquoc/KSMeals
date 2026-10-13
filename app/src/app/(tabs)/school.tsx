@@ -133,7 +133,7 @@ export default function SchoolScreen() {
                 </ThemedText>
                 <ThemedText type="small" themeColor="textSecondary">
                   {allergies.length
-                    ? 'App tô đỏ những món có thể gây dị ứng cho con.'
+                    ? 'App tô đỏ những món có thể gây dị ứng cho con. Cảnh báo có thể sót, hãy xác nhận với nhà trường.'
                     : 'Chọn nếu con bị dị ứng, app sẽ tô đỏ món cần chú ý.'}
                 </ThemedText>
               </View>
@@ -143,6 +143,10 @@ export default function SchoolScreen() {
             <>
               <ThemedText type="small" themeColor="textSecondary">
                 Chọn để app tô đỏ những món mà con có thể bị dị ứng. Chỉ lưu trên máy của bạn.
+              </ThemedText>
+              {/* Said where the parent switches the alerts on: under the menus few scroll far enough to read it. */}
+              <ThemedText type="small" style={{ color: theme.warn }}>
+                Cảnh báo dò theo tên món và nguyên liệu thường dùng nên có thể sót. Hãy xác nhận với nhà trường.
               </ThemedText>
               <View style={styles.allergyGrid}>
                 {Object.entries(ALLERGEN).map(([id, label]) => {
@@ -198,11 +202,6 @@ export default function SchoolScreen() {
                     <ThemedText type="smallBold" style={{ color: theme.onAccent }}>Thêm</ThemedText>
                   </Pressable>
                 </View>
-              ) : null}
-              {custom.length ? (
-                <ThemedText type="small" themeColor="textSecondary">
-                  Mục tự thêm được dò theo tên món và nguyên liệu thường dùng, nên có thể sót. Hãy xác nhận với nhà trường.
-                </ThemedText>
               ) : null}
               <Pressable
                 onPress={() => {

@@ -127,19 +127,19 @@ export default function TodayScreen() {
             isToday={isSameDay(selected, today)}
             allergies={allergies}
           />
+          {/* The only hint that alerts exist, for parents who have not set any allergy yet. */}
+          {!allergies.length && meals.some((m) => m.date === iso(selected) && m.dishes.length) ? (
+            <Pressable onPress={() => router.navigate('/school')} accessibilityRole="link">
+              <ThemedText type="smallBold">
+                Con bị dị ứng?{' '}
+                <ThemedText type="smallBold" style={{ color: theme.accent }}>Chọn ở Hồ sơ để app tô đỏ món cần chú ý ›</ThemedText>
+              </ThemedText>
+            </Pressable>
+          ) : null}
           {meals.some((m) => m.date === iso(selected) && m.dishes.length) ? (
             <ShareButton school={school} day={selected} meals={meals.filter((m) => m.date === iso(selected))} />
           ) : null}
           <DayMenu meals={meals.filter((m) => m.date === iso(selected))} sources={sources} />
-          {/* The only hint that alerts exist, for parents who have not set any allergy yet. */}
-          {!allergies.length && meals.some((m) => m.date === iso(selected) && m.dishes.length) ? (
-            <Pressable onPress={() => router.navigate('/school')} accessibilityRole="link">
-              <ThemedText type="small" themeColor="textSecondary">
-                Con bị dị ứng?{' '}
-                <ThemedText type="small" style={{ color: theme.accent }}>Chọn ở Hồ sơ để app tô đỏ món cần chú ý ›</ThemedText>
-              </ThemedText>
-            </Pressable>
-          ) : null}
         </>
       )}
       <MenuNotes />
