@@ -21,6 +21,9 @@ from pipeline.fetch import Fetcher, site_url
 SUBDOMAIN_RE = re.compile(r"https?://([a-z0-9-]+)\.hcm\.edu\.vn", re.I)
 WARD_RE = re.compile(r"^(phuong|xa|dackhu)[a-z0-9]+$")
 LEVEL_RE = re.compile(r"codekhoi=(mn|th|thcs)\b")
+# Decoration some ward portals type around a name ("_____Trường Mầm non Vườn Hồng_____"), and
+# zero-width characters: they sort the school first in the app and break the search.
+NAME_JUNK_RE = re.compile("[_\u200b\u200c\u200d\ufeff]+")
 
 
 def parse_ward_codes(html: str) -> set[str]:
@@ -56,6 +59,10 @@ def write_ward_names(seed: str, out: Path):
     print(f"{len(names)} ward names written to {out}")
 
 
+def clean_name(text: str) -> str:
+    return " ".join(NAME_JUNK_RE.sub(" ", text).split())
+
+
 def parse_schools(html: str, ward: str) -> list[dict]:
     """Extract schools from the ward portal nav: one dropdown per school level."""
     soup = BeautifulSoup(html, "lxml")
@@ -71,7 +78,7 @@ def parse_schools(html: str, ward: str) -> list[dict]:
                 continue
             schools.append({
                 "code": code,
-                "name": " ".join(a.get_text().split()),
+                "name": clean_name(a.get_text()),
                 "level": level,
                 "ward": ward,
             })

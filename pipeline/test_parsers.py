@@ -8,7 +8,7 @@ from pipeline.allergens import detect
 from pipeline.crawl import MIN_BODY_TEXT, body_text, parse_post
 from pipeline.dates import parse_slug_range, parse_title_range, school_week_monday
 from pipeline.process import interpret, merge_menus, read_one_by_one, tray_meal_type
-from pipeline.discover import parse_schools, parse_ward_codes, parse_ward_names
+from pipeline.discover import clean_name, parse_schools, parse_ward_codes, parse_ward_names
 from pipeline.split import build_meals
 from pipeline.survey import classify, is_menu_post, parse_sitemap
 
@@ -53,6 +53,8 @@ def test_schools_grouped_by_level():
         ("mn1tanbinh", "mn", "Mầm non 1"),
         ("thlevansi", "th", "Tiểu Học Lê Văn Sĩ"),
     ]
+    assert clean_name("_____Trường Mầm non Vườn Hồng_____ Phường Chánh Hưng") == "Trường Mầm non Vườn Hồng Phường Chánh Hưng"
+    assert clean_name("Trường\u200b Mầm non  Sao Mai 13") == "Trường Mầm non Sao Mai 13"
 
 
 def test_menu_post_detection():
