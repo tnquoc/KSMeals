@@ -14,7 +14,7 @@ import { MEAL_ORDER } from '@/lib/labels';
 
 type Props = {
   meals: Meal[]; // meals of this day only
-  sources: Record<number, SourcePost>;
+  sources: Record<number, SourcePost>; // a post missing here is not shown under the day
 };
 
 const docLabel = (url: string) => {
@@ -23,7 +23,7 @@ const docLabel = (url: string) => {
 };
 
 /** The school's own menu (image or file), so parents can check what we extracted. */
-function OriginalMenu({ posts }: { posts: SourcePost[] }) {
+function OriginalMenu({ posts, title }: { posts: SourcePost[]; title: string }) {
   const theme = useTheme();
   const images = posts.flatMap((p) => p.image_urls);
   const docs = posts.flatMap((p) => p.doc_urls);
@@ -31,7 +31,7 @@ function OriginalMenu({ posts }: { posts: SourcePost[] }) {
 
   return (
     <View style={styles.original}>
-      <ThemedText type="smallBold" themeColor="textSecondary">🗒️ Thực đơn gốc của trường</ThemedText>
+      <ThemedText type="smallBold" themeColor="textSecondary">🗒️ {title}</ThemedText>
       {images.length ? (
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.originalRow}>
           {images.map((url) => (
@@ -47,6 +47,20 @@ function OriginalMenu({ posts }: { posts: SourcePost[] }) {
         </Pressable>
       ))}
     </View>
+  );
+}
+
+/** The school's posts some meals were read from: the original menu, then a link to each post. */
+export function MenuSources({ posts, title = 'Thực đơn gốc của trường' }: { posts: SourcePost[]; title?: string }) {
+  return (
+    <>
+      <OriginalMenu posts={posts.filter((p) => p.kind !== 'tray')} title={title} />
+      {posts.map((p) => (
+        <ExternalLink key={p.id} href={p.url as Href & string}>
+          <ThemedText type="linkPrimary">Xem bài đăng trên website trường ↗</ThemedText>
+        </ExternalLink>
+      ))}
+    </>
   );
 }
 
@@ -69,12 +83,7 @@ export function DayMenu({ meals, sources }: Props) {
       {sorted.map((m) => (
         <MealCard key={`${m.date}-${m.meal_type}`} meal={m} />
       ))}
-      <OriginalMenu posts={posts.filter((p) => p.kind !== 'tray')} />
-      {posts.map((p) => (
-        <ExternalLink key={p.id} href={p.url as Href & string}>
-          <ThemedText type="linkPrimary">Xem bài đăng trên website trường ↗</ThemedText>
-        </ExternalLink>
-      ))}
+      <MenuSources posts={posts} />
     </View>
   );
 }

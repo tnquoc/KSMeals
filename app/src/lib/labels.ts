@@ -49,6 +49,81 @@ export const COURSE_ICON: Record<string, string> = {
   other: '🍽️',
 };
 
+const starts = (words: string) => new RegExp(`^(?:${words})(?![\\p{L}])`, 'u');
+const has = (words: string) => new RegExp(`(?:^|[^\\p{L}])(?:${words})(?![\\p{L}])`, 'u');
+
+// What the dish is, read from how its name starts ("Mì trứng nấu thịt heo" is noodles, not rice).
+const BASE_ICON: [RegExp, string][] = [
+  [starts('mì ý|mì spaghetti|spaghetti'), '🍝'],
+  [starts('mì|mỳ|bún|phở|hủ tiếu|hủ tíu|hủ tiểu|miến|nui|bánh canh|bánh đa|hoành thánh'), '🍜'],
+  [starts('cháo|súp|soup'), '🥣'],
+  [starts('cơm|xôi'), '🍚'],
+  [starts('bánh mì|hamburger|bánh hotdog'), '🥖'],
+  [starts('bánh bao|há cảo|sủi cảo'), '🥟'],
+  [starts('bánh flan|bánh plan|kem flan|kem plan|bánh pudding|pudding|rau câu|thạch'), '🍮'],
+  [starts('bánh quy|bánh xốp|bánh quế|bánh gạo|bánh nabati|bánh chocopie'), '🍪'],
+  [starts('bánh bông lan|bánh kem|bánh ngọt|bánh su|bánh pía|bánh trung thu|bánh dorayaki|bánh paparotti'), '🍰'],
+  [starts('kem'), '🍦'],
+  [starts('sữa|yaourt|yogurt|yakult'), '🥛'],
+  [starts('nước(?! lèo| dùng| mắm)|sinh tố|trà'), '🥤'],
+  [starts('canh'), '🍲'],
+  [starts('phô mai|phomai|pho mai'), '🧀'],
+];
+// Món mặn: the first meat or fish named ("Bò sốt cá hộp" is beef).
+const PROTEIN_ICON: [RegExp, string][] = [
+  [has('cá'), '🐟'],
+  [has('tôm'), '🍤'],
+  [has('cua|ghẹ'), '🦀'],
+  [has('mực'), '🦑'],
+  [has('thịt gà|gà|vịt'), '🍗'],
+  [has('trứng'), '🍳'],
+  [has('thịt bò|bò'), '🥩'],
+  [has('đậu hũ|đậu hủ|tàu hũ|đậu phụ'), '🥘'],
+  [has('thịt|heo|sườn|xíu mại'), '🍖'],
+];
+const VEGETABLE_ICON: [RegExp, string][] = [
+  [starts('bông cải|súp lơ'), '🥦'],
+  [starts('cà rốt'), '🥕'],
+  [starts('khoai tây'), '🥔'],
+  [starts('khoai lang|khoai mỡ|khoai môn'), '🍠'],
+  [starts('bắp(?! cải)|ngô'), '🌽'],
+  [starts('bí đỏ'), '🎃'],
+  [starts('nấm'), '🍄'],
+  [starts('trứng'), '🥚'],
+];
+const FRUIT_ICON: [RegExp, string][] = [
+  [starts('chuối'), '🍌'],
+  [starts('dưa hấu'), '🍉'],
+  [starts('dưa lưới|dưa gang'), '🍈'],
+  [starts('táo'), '🍎'],
+  [starts('nho'), '🍇'],
+  [starts('cam|quýt'), '🍊'],
+  [starts('lê'), '🍐'],
+  [starts('xoài'), '🥭'],
+  [starts('thơm|khóm|dứa'), '🍍'],
+  [starts('dâu'), '🍓'],
+];
+const BY_COURSE: Record<string, [RegExp, string][]> = {
+  stir_fry: VEGETABLE_ICON,
+  side: [...VEGETABLE_ICON, ...FRUIT_ICON],
+  dessert: FRUIT_ICON,
+  other: FRUIT_ICON,
+};
+
+/** Icon of one dish: from its name where that is clear, otherwise from its course. Decorative only. */
+export function dishIcon(dish: string, course: string): string {
+  // "Món mặn: Chả sò điệp" -> "chả sò điệp"
+  const name = dish.toLowerCase().normalize('NFC').replace(/^[^:]{0,14}:\s*/, '').replace(/^[^\p{L}]+/u, '');
+  const base = BASE_ICON.find(([re]) => re.test(name));
+  if (base) return base[1];
+  if (course === 'main') {
+    const found = PROTEIN_ICON.map(([re, icon]) => ({ at: name.search(re), icon })).filter((p) => p.at >= 0);
+    if (found.length) return found.reduce((a, b) => (b.at < a.at ? b : a)).icon;
+  }
+  const specific = BY_COURSE[course]?.find(([re]) => re.test(name));
+  return specific?.[1] ?? COURSE_ICON[course] ?? COURSE_ICON.other;
+}
+
 // Same ids as pipeline/allergens.py
 export const ALLERGEN: Record<string, string> = {
   crustacean: 'Tôm, cua',

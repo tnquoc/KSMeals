@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
-import { DayMenu } from '@/components/day-menu';
+import { DayMenu, MenuSources } from '@/components/day-menu';
 import { LoadFailed } from '@/components/load-failed';
 import { NoSchool } from '@/components/no-school';
 import { PageHeader } from '@/components/page-header';
@@ -51,6 +51,16 @@ export default function WeekScreen() {
   const auto = displayWeek(today, meals);
   const monday = chosen ?? auto.monday;
   const friday = addDays(monday, 4);
+  // A post that several days were read from (the week's menu) is shown once under the week,
+  // not again under each day; a post for a single day stays with its day.
+  const daysOf: Record<number, Set<string>> = {};
+  for (const m of meals) {
+    if (m.source_post_id != null && m.date >= iso(monday) && m.date <= iso(friday)) {
+      (daysOf[m.source_post_id] ??= new Set()).add(m.date);
+    }
+  }
+  const weekPosts = Object.values(sources).filter((p) => (daysOf[p.id]?.size ?? 0) > 1);
+  const daySources = Object.fromEntries(Object.entries(sources).filter(([, p]) => !weekPosts.includes(p)));
 
   return (
     <Screen refreshing={refreshing} onRefresh={reload}>
@@ -87,10 +97,15 @@ export default function WeekScreen() {
                 {isSameDay(d, today) ? ' · Hôm nay' : ''}
                 {flagged ? <ThemedText type="smallBold" style={{ color: theme.danger }}>{`  ⛔ ${flagged} món cần chú ý`}</ThemedText> : null}
               </ThemedText>
-              <DayMenu meals={dayMeals} sources={sources} />
+              <DayMenu meals={dayMeals} sources={daySources} />
             </View>
           );
         })}
+      {!loading && weekPosts.length ? (
+        <View style={styles.day}>
+          <MenuSources posts={weekPosts} title="Thực đơn gốc cả tuần của trường" />
+        </View>
+      ) : null}
       <ThemedText type="small" themeColor="textSecondary">{DISCLAIMER}</ThemedText>
     </Screen>
   );

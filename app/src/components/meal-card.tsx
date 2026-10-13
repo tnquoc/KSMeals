@@ -7,7 +7,7 @@ import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import type { Meal, Nutrition } from '@/lib/api';
-import { ALLERGEN, allergenNames, allergyHits, COURSE, COURSE_ICON, MEAL, MEAL_ICON, MEAL_TINT } from '@/lib/labels';
+import { ALLERGEN, allergenNames, allergyHits, COURSE, dishIcon, MEAL, MEAL_ICON, MEAL_TINT } from '@/lib/labels';
 import { useSchool } from '@/lib/school-store';
 
 /** Share of the meal's energy from protein, fat and carbs, with grams as direct labels. */
@@ -74,7 +74,7 @@ export function MealCard({ meal }: { meal: Meal }) {
             <View
               key={`${dish}-${i}`}
               style={[styles.dish, danger.length ? [styles.dangerDish, { backgroundColor: theme.dangerSoft, borderColor: theme.danger }] : null]}>
-              <ThemedText style={styles.icon}>{COURSE_ICON[meal.courses[i]] ?? COURSE_ICON.other}</ThemedText>
+              <ThemedText style={styles.icon}>{dishIcon(dish, meal.courses[i])}</ThemedText>
               <View style={styles.dishText}>
                 <ThemedText style={[styles.dishName, danger.length ? { color: theme.danger, fontWeight: 700 } : null]}>{dish}</ThemedText>
                 {danger.length ? (
