@@ -22,6 +22,18 @@ def hint_range(title: str, slug: str, published_at: date) -> tuple[date, date] |
     return parse_title_range(title, published_at) or parse_slug_range(slug, published_at)
 
 
+def unique_dishes(dishes: list[dict]) -> list[dict]:
+    """Drop repeats inside one meal: menus with a rice group and a porridge group (nhóm cơm /
+    nhóm cháo) list the shared milk or dessert once per group."""
+    seen, out = set(), []
+    for x in dishes:
+        key = " ".join(x["name"].lower().split())
+        if key not in seen:
+            seen.add(key)
+            out.append(x)
+    return out
+
+
 def build_meals(ocr: dict, title: str, slug: str, published_at: date) -> tuple[list[dict], list[str]]:
     """Return (meal rows, issues). Rows have date, meal_type, dishes (names), courses."""
     issues = []
@@ -67,7 +79,7 @@ def build_meals(ocr: dict, title: str, slug: str, published_at: date) -> tuple[l
                 issues.append(f"duplicate {key[1]} on {d}")
                 continue
             seen.add(key)
-            dishes = [x for x in meal.get("dishes") or [] if x.get("name", "").strip()]
+            dishes = unique_dishes([x for x in meal.get("dishes") or [] if x.get("name", "").strip()])
             if not dishes:
                 continue
             rows.append({

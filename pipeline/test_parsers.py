@@ -7,7 +7,7 @@ from pipeline.addresses import parse_address
 from pipeline.allergens import detect
 from pipeline.crawl import MIN_BODY_TEXT, body_text, parse_post
 from pipeline.dates import parse_slug_range, parse_title_range, school_week_monday
-from pipeline.process import interpret, tray_meal_type
+from pipeline.process import interpret, merge_menus, read_one_by_one, tray_meal_type
 from pipeline.discover import parse_schools, parse_ward_codes, parse_ward_names
 from pipeline.split import build_meals
 from pipeline.survey import classify, is_menu_post, parse_sitemap
@@ -172,6 +172,37 @@ def test_build_meals_wordy_title_date_and_morning_snack():
     rows, issues = build_meals(ocr, "CÔNG KHAI HÓA ĐƠN XUẤT ĂN NGÀY 22 THÁNG 9", "", date(2026, 9, 22))
     assert issues == []
     assert [r["meal_type"] for r in rows] == ["breakfast", "morning_snack", "lunch", "snack"]
+
+
+def test_build_meals_drops_repeated_dishes():
+    # Rice group and porridge group in one cell: the shared milk is listed once per group.
+    ocr = {"kind": "weekly_menu", "days": [{"date": "2026-10-12", "weekday": 2, "meals": [
+        {"meal_type": "breakfast", "dishes": [
+            {"name": "Bánh đa cua thịt heo", "course": "staple"}, {"name": "sữa bột pha", "course": "drink"},
+            {"name": "cháo thịt heo cà chua dầu gấc", "course": "staple"}, {"name": "Sữa bột  pha", "course": "drink"}]},
+        {"meal_type": "lunch", "dishes": [{"name": "Cơm", "course": "staple"}]}]}]}
+    rows, issues = build_meals(ocr, "Thực đơn ngày 12/10/2026", "", date(2026, 10, 12))
+    assert issues == []
+    assert rows[0]["dishes"] == ["Bánh đa cua thịt heo", "sữa bột pha", "cháo thịt heo cà chua dầu gấc"]
+    assert rows[0]["courses"] == ["staple", "drink", "staple"]
+
+
+def test_month_posted_as_one_file_per_week():
+    day = lambda d, wd: {"date": d, "weekday": wd, "meals": [{"meal_type": "lunch", "dishes": [{"name": "Cơm", "course": "staple"}]}]}
+    post = {"image_urls": [], "doc_urls": ["tuan-1.pdf", "tuan-2.pdf", "tuan-3.pdf"]}
+    week1 = {"kind": "weekly_menu", "week_start": "2026-10-05", "week_end": "2026-10-09", "days": [day("2026-10-05", 2)]}
+    # All files in one call came back as the first week only: read them one at a time.
+    assert read_one_by_one(post, week1)
+    assert not read_one_by_one({**post, "doc_urls": ["tuan-1.pdf"]}, week1)
+    assert not read_one_by_one({**post, "doc_urls": ["hoa-don.pdf"] * 19}, week1)
+    assert not read_one_by_one(post, {"kind": "other", "days": []})
+    week2 = {"kind": "weekly_menu", "week_start": "2026-10-12", "week_end": "2026-10-16", "days": [day(None, 3)]}
+    again = {"kind": "weekly_menu", "week_start": "2026-10-05", "week_end": "2026-10-09", "days": [day("2026-10-05", 2)]}
+    merged = merge_menus([week1, {"kind": "other", "days": []}, week2, again])
+    assert [d["date"] for d in merged["days"]] == ["2026-10-05", "2026-10-13"]  # undated day: its own file's week
+    assert (merged["week_start"], merged["week_end"]) == ("2026-10-05", "2026-10-16")
+    rows, issues = build_meals(merged, "Thực đơn tháng 10/2026", "", date(2026, 10, 3))
+    assert issues == [] and [r["date"] for r in rows] == [date(2026, 10, 5), date(2026, 10, 13)]
 
 
 def test_build_meals_rejects_non_menu():

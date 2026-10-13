@@ -12,16 +12,16 @@ import argparse
 import asyncio
 import re
 import time
-from datetime import date
+from datetime import date, timedelta
 
 from openai import APIConnectionError, InternalServerError, RateLimitError
 
 from pipeline import config
 from pipeline.crawl import fetch_contents, soffice
-from pipeline.dates import DATE_RE, _make
+from pipeline.dates import DATE_RE, _make, week_of
 from pipeline.fetch import Fetcher
 from pipeline.ocr import extract_menu, make_client
-from pipeline.split import build_meals
+from pipeline.split import _iso, build_meals
 from pipeline.store import Store
 from pipeline.survey import POST_RE
 
@@ -115,6 +115,46 @@ def interpret(post: dict, ocr: dict) -> tuple[list[dict], list[dict]]:
     return meals, []
 
 
+MAX_FILES_ONE_BY_ONE = 6  # invoice posts carry up to 20 files; those are not menus anyway
+
+
+def weeks_read(ocr: dict) -> int:
+    days = [_iso(d.get("date")) for d in ocr.get("days") or []]
+    return len({d.isocalendar()[:2] for d in days if d})
+
+
+def read_one_by_one(post: dict, ocr: dict) -> bool:
+    """A month posted as one file per week comes back as its first week only when all files
+    go into one call: such a post is read again, one file at a time."""
+    files = len(post["doc_urls"])
+    return (ocr.get("kind") == "weekly_menu" and not post["image_urls"]
+            and 2 <= files <= MAX_FILES_ONE_BY_ONE and weeks_read(ocr) < files)
+
+
+def merge_menus(parts: list[dict]) -> dict:
+    """The menu read from each file -> one menu. A date read twice (the same week for two age
+    groups) keeps the first file's dishes, as a single call does."""
+    menus = [p for p in parts if p.get("kind") == "weekly_menu"]
+    if not menus:
+        return parts[0]
+    days, seen = [], set()
+    for menu in menus:
+        start = _iso(menu.get("week_start"))
+        for day in menu.get("days") or []:
+            weekday = day.get("weekday")
+            # Each file has its own week: a day without a date belongs to that week, not the first one.
+            if not day.get("date") and start and isinstance(weekday, int) and 2 <= weekday <= 7:
+                day = {**day, "date": (week_of(start)[0] + timedelta(days=weekday - 2)).isoformat()}
+            if day.get("date"):
+                if day["date"] in seen:
+                    continue
+                seen.add(day["date"])
+            days.append(day)
+    starts = sorted(m["week_start"] for m in menus if m.get("week_start"))
+    ends = sorted(m["week_end"] for m in menus if m.get("week_end"))
+    return {**menus[0], "days": days, "week_start": starts[0] if starts else None, "week_end": ends[-1] if ends else None}
+
+
 async def run(limit: int | None, retry_review: bool):
     store = Store()
     todo = store.todo_posts(retry_review, retry_legacy=soffice() is not None)
@@ -139,6 +179,14 @@ async def run(limit: int | None, retry_review: bool):
                 try:
                     ocr = await asyncio.to_thread(call_with_backoff, lambda: extract_menu(
                         images, post["title"], post["published_at"], text=text, client=client))
+                    if read_one_by_one(post, ocr):
+                        parts = []
+                        for url in post["doc_urls"]:
+                            images, text, _ = await fetch_contents(f, {**post, "doc_urls": [url]})
+                            if images or text:
+                                parts.append(await asyncio.to_thread(call_with_backoff, lambda: extract_menu(
+                                    images, post["title"], post["published_at"], text=text, client=client)))
+                        ocr = merge_menus(parts or [ocr])
                     meals, trays = interpret(post, ocr)
                 except DailyQuotaExhausted as e:
                     print(f"daily LLM quota exhausted after {i - 1} posts; the rest stay pending.\n  {e}")

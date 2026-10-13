@@ -20,6 +20,7 @@ Plan and progress: `roadmap.md`. Setup and commands: `README.md`. App-specific r
 
 ## Gotchas
 - Gemini free tier: `gemini-3.5-flash` = 20 req/day, so the default is `gemini-3.5-flash-lite`; chat and pipeline share the quota (chat limit `CHAT_DAILY_LIMIT`, default 20).
+- The pipeline's OCR can use up the whole daily `gemini-3.5-flash-lite` quota (after +292 schools the nutrition queue reached 5,200 meals on 2026-10-13). Allergen tags therefore never wait for the LLM: `store.finish_post` tags each dish, and `pipeline.nutrition` starts with a keyword-only `retag` (`--tags-only` to run just that).
 - Allergy answers must come from `meals.dish_allergens` + the allergen index built in code, never from the model's own reading. Allergies the parent types ("thịt vịt") are matched by `customMatcher`, kept identical in `app/src/lib/labels.ts` and `supabase/functions/chat/index.ts`.
 - robots.txt disallows `/Timkiem`; crawl with `Fetcher` (low concurrency). School sites sometimes go down for ~15 min.
 - Git Bash rewrites `/KSMeals`-style paths: use `MSYS_NO_PATHCONV=1` if you ever build with an `EXPO_BASE_URL` sub-path.

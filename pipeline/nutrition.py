@@ -1,15 +1,16 @@
 """Estimate nutrition and write a short note for each meal; detect allergens by keyword.
 
-One text-only LLM call per school-week (cheap), for published meals that have no
-nutrition yet, so it resumes after a quota stop like process.py.
+First the keyword allergen tags of recent meals are refreshed (no LLM). Then one text-only
+LLM call per school-week (cheap), for published meals that have no nutrition yet, so it
+resumes after a quota stop like process.py.
 
-Usage: uv run python -m pipeline.nutrition [--limit N]
+Usage: uv run python -m pipeline.nutrition [--limit N] [--tags-only]
 """
 import argparse
 import json
 import time
 from collections import defaultdict
-from datetime import date
+from datetime import date, timedelta
 
 from pipeline import config
 from pipeline.allergens import detect
@@ -96,8 +97,30 @@ def to_row(meal: dict, est: dict | None) -> dict:
     return row
 
 
-def todo_groups(store: Store) -> list[tuple[int, str, list[dict]]]:
-    """(school_id, level, meals) per school and ISO week, for published meals without nutrition."""
+RETAG_DAYS = 21  # how far back the keyword tags are kept in step with dishes and ingredients
+
+
+def retag(store: Store, today: date | None = None) -> int:
+    """Recompute the keyword allergen tags of recent meals, without the LLM.
+
+    Tags must not wait for the nutrition estimate: when the daily quota runs out, meals stay in
+    that queue for days, and a parent who set an allergy would see no alert on them."""
+    since = (today or date.today()) - timedelta(days=RETAG_DAYS)
+    rows = store.select("meals", select="school_id,date,meal_type,dishes,ingredients,allergens,dish_allergens",
+                        status="eq.published", date=f"gte.{since}")
+    changed = []
+    for r in rows:
+        dishes = r["dishes"] or []
+        tags = {"allergens": detect(dishes + (r["ingredients"] or [])), "dish_allergens": [detect([d]) for d in dishes]}
+        if tags["allergens"] != r["allergens"] or tags["dish_allergens"] != r["dish_allergens"]:
+            changed.append({"school_id": r["school_id"], "date": r["date"], "meal_type": r["meal_type"], **tags})
+    store.upsert("meals", changed, "school_id,date,meal_type")
+    return len(changed)
+
+
+def todo_groups(store: Store, today: date | None = None) -> list[tuple[int, str, list[dict]]]:
+    """(school_id, level, meals) per school and ISO week, for published meals without nutrition.
+    The weeks parents are looking at come first: this week, next week, then older ones."""
     rows = store.select("meals", select="id,school_id,date,meal_type,dishes,schools(level)",
                         status="eq.published", nutrition="is.null", order="school_id,date")
     groups = defaultdict(list)
@@ -106,11 +129,20 @@ def todo_groups(store: Store) -> list[tuple[int, str, list[dict]]]:
             continue
         week = date.fromisoformat(r["date"]).isocalendar()[:2]
         groups[(r["school_id"], r["schools"]["level"], week)].append(r)
-    return [(sid, level, meals) for (sid, level, _), meals in groups.items()]
+    this_week = (today or date.today()).isocalendar()[:2]
+
+    def priority(group):
+        week = group[0][2]
+        return (0, week) if week >= this_week else (1, (-week[0], -week[1]))
+
+    return [(sid, level, meals) for (sid, level, _), meals in sorted(groups.items(), key=priority)]
 
 
-def run(limit: int | None):
+def run(limit: int | None, tags_only: bool = False):
     store = Store()
+    print(f"allergen tags updated for {retag(store)} meals")
+    if tags_only:
+        return
     groups = todo_groups(store)[:limit] if limit else todo_groups(store)
     print(f"nutrition for {len(groups)} school-weeks ({sum(len(g[2]) for g in groups)} meals), {config.LLM_MODEL}")
     client = make_client()
@@ -135,7 +167,9 @@ def run(limit: int | None):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--limit", type=int, help="only the first N school-weeks")
-    run(ap.parse_args().limit)
+    ap.add_argument("--tags-only", action="store_true", help="only refresh the keyword allergen tags (no LLM calls)")
+    args = ap.parse_args()
+    run(args.limit, args.tags_only)
 
 
 if __name__ == "__main__":

@@ -7,6 +7,7 @@ import json
 import httpx
 
 from pipeline import config
+from pipeline.allergens import detect
 
 BATCH = 500
 PAGE = 1000
@@ -117,9 +118,12 @@ class Store:
         sid = post["school_id"]
         if meals:
             # No tray_image_urls in the payload: an existing row keeps its photos.
+            # Allergen tags of each dish come from keywords, so they are there the moment the meal
+            # is published (and stay parallel to `dishes` when a later post replaces them).
             self.upsert("meals", [{
                 "school_id": sid, "date": m["date"], "meal_type": m["meal_type"], "dishes": m["dishes"],
                 "courses": m["courses"], "source_post_id": post["id"], "status": m["status"],
+                "dish_allergens": [detect([d]) for d in m["dishes"]],
             } for m in meals], "school_id,date,meal_type")
         if trays:
             # Only tray_image_urls: an existing menu row keeps its dishes.
