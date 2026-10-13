@@ -18,6 +18,9 @@ const LLM_MODEL = Deno.env.get("LLM_MODEL") ?? "gemini-3.5-flash-lite";
 // Messages per device per day. The chat shares the Gemini free-tier quota with the daily pipeline,
 // so keep it low until billing is on; change with `supabase secrets set CHAT_DAILY_LIMIT=...`.
 const DAILY_LIMIT = Number(Deno.env.get("CHAT_DAILY_LIMIT") ?? 20);
+// All devices together, per day. The device id is made up by the client (a private tab gets a
+// new one), so this is what stops a script from spending the whole Gemini quota.
+const GLOBAL_DAILY_LIMIT = Number(Deno.env.get("CHAT_GLOBAL_DAILY_LIMIT") ?? 300);
 const MAX_MESSAGE_CHARS = 500;
 const MAX_HISTORY = 8;
 
@@ -126,6 +129,12 @@ const dm = (iso: string) => `${Number(iso.slice(8, 10))}/${Number(iso.slice(5, 7
 function weekLabel(iso: string, monday: string): string {
   const weeks = Math.floor((Date.parse(iso) - Date.parse(monday)) / (7 * 86400000));
   return weeks === 0 ? "tuần này" : weeks === -1 ? "tuần trước" : weeks === 1 ? "tuần sau" : `${weeks > 0 ? "sau" : "trước"} ${Math.abs(weeks)} tuần`;
+}
+
+/** Questions answered today for all devices together. */
+async function askedToday(today: string): Promise<number> {
+  const rows = await db(`chat_usage?select=count&date=eq.${today}`) as { count: number }[];
+  return rows.reduce((sum, r) => sum + r.count, 0);
 }
 
 /** Count this message against the device's daily limit; returns messages left after it, or -1 if over. */
@@ -306,6 +315,10 @@ Deno.serve(async (req) => {
 
   try {
     const today = vnToday();
+    // Checked before anything is written: requests over the cap leave no rows behind.
+    if (await askedToday(today.iso) >= GLOBAL_DAILY_LIMIT) {
+      return json({ error: "limit_all", reply: "Hôm nay trợ lý đã trả lời hết lượt cho tất cả ba mẹ. Mai ba mẹ hỏi tiếp nhé!" }, 429);
+    }
     const remaining = await consume(deviceId, today.iso);
     if (remaining < 0) {
       return json({ error: "limit", reply: `Bạn đã dùng hết ${DAILY_LIMIT} câu hỏi hôm nay. Mai hỏi tiếp nhé!` }, 429);

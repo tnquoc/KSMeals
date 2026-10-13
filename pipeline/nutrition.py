@@ -72,7 +72,7 @@ def estimate(client, level: str, meals: list[dict]) -> list[dict]:
     for m in meals:
         lines.append(f"{m['date']} {m['meal_type']}: " + "; ".join(m["dishes"]))
     resp = client.chat.completions.create(
-        model=config.LLM_MODEL,
+        model=config.NUTRITION_MODEL,
         temperature=0,
         messages=[{"role": "system", "content": SYSTEM_PROMPT}, {"role": "user", "content": "\n".join(lines)}],
         response_format={"type": "json_schema", "json_schema": {"name": "nutrition", "schema": SCHEMA}},
@@ -144,7 +144,7 @@ def run(limit: int | None, tags_only: bool = False):
     if tags_only:
         return
     groups = todo_groups(store)[:limit] if limit else todo_groups(store)
-    print(f"nutrition for {len(groups)} school-weeks ({sum(len(g[2]) for g in groups)} meals), {config.LLM_MODEL}")
+    print(f"nutrition for {len(groups)} school-weeks ({sum(len(g[2]) for g in groups)} meals), {config.NUTRITION_MODEL}")
     client = make_client()
     t = time.time()
     for i, (school_id, level, meals) in enumerate(groups, 1):

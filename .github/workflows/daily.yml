@@ -58,4 +58,4 @@ jobs:
         run: uv run python -m pipeline.process
 
       - name: Nutrition estimates and allergens
-        run: uv run python -m pipeline.nutrition
+        run: uv run python -m pipeline.nutrition --limit 150

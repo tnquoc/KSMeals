@@ -19,7 +19,7 @@ Plan and progress: `roadmap.md`. Setup and commands: `README.md`. App-specific r
 - Local tools: `uv run python -m pipeline.devserver` (viewer + review at 127.0.0.1:8765), `pipeline.demand`, `pipeline.stats`, `pipeline.forget <device-id>` (data deletion requests, privacy page promises 30 days), `pipeline.addresses`, `scripts/make_icons.py build shield_steam`.
 
 ## Gotchas
-- Gemini free tier: `gemini-3.5-flash` = 20 req/day, so the default is `gemini-3.5-flash-lite`; chat and pipeline share the quota (chat limit `CHAT_DAILY_LIMIT`, default 20).
+- Gemini free tier (AI Studio → Rate Limit, 2026-10-13): each Flash model 20 req/day, each Flash Lite model 500 req/day and 15/min. OCR and chat use `gemini-3.5-flash-lite` (chat falls back to `gemini-3.1-flash-lite`), nutrition uses `gemini-3.1-flash-lite` (`NUTRITION_MODEL`, 150 school-weeks per daily run). Chat limits: `CHAT_DAILY_LIMIT` per device (default 20; a private tab is a new device) and `CHAT_GLOBAL_DAILY_LIMIT` for everyone (default 300).
 - The pipeline's OCR can use up the whole daily `gemini-3.5-flash-lite` quota (after +292 schools the nutrition queue reached 5,200 meals on 2026-10-13). Allergen tags therefore never wait for the LLM: `store.finish_post` tags each dish, and `pipeline.nutrition` starts with a keyword-only `retag` (`--tags-only` to run just that).
 - Allergy answers must come from `meals.dish_allergens` + the allergen index built in code, never from the model's own reading. Allergies the parent types ("thịt vịt") are matched by `customMatcher`, kept identical in `app/src/lib/labels.ts` and `supabase/functions/chat/index.ts`.
 - robots.txt disallows `/Timkiem`; crawl with `Fetcher` (low concurrency). School sites sometimes go down for ~15 min.

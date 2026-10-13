@@ -12,6 +12,9 @@ GEMINI_OPENAI_URL = "https://generativelanguage.googleapis.com/v1beta/openai/"
 LLM_BASE_URL = os.getenv("LLM_BASE_URL", GEMINI_OPENAI_URL)
 LLM_API_KEY = os.getenv("LLM_API_KEY") or os.getenv("GEMINI_API_KEY", "")
 LLM_MODEL = os.getenv("LLM_MODEL", "gemini-3.5-flash-lite")
+# Each free-tier model has its own 500 requests/day: reading menus takes most of the first one,
+# so the text-only nutrition estimates use another.
+NUTRITION_MODEL = os.getenv("NUTRITION_MODEL", "gemini-3.1-flash-lite")
 # Seconds between LLM calls; the free tier allows only a few requests per minute.
 LLM_MIN_INTERVAL = float(os.getenv("LLM_MIN_INTERVAL", "12"))
 
