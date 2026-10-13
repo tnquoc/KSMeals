@@ -12,6 +12,7 @@ import json
 import os
 from collections import defaultdict
 from datetime import datetime, timedelta, timezone
+from urllib.parse import urlsplit
 
 from pywebpush import WebPushException, webpush
 
@@ -25,6 +26,17 @@ ALLERGEN = {
     "crustacean": "Tôm, cua", "mollusc": "Mực, sò", "fish": "Cá", "egg": "Trứng", "milk": "Sữa",
     "peanut": "Đậu phộng", "soy": "Đậu nành", "gluten": "Lúa mì", "sesame": "Mè", "tree_nut": "Hạt",
 }
+# Browsers only hand out endpoints on their vendor's push service. `subscribe_push` can be called
+# by anyone holding the public key, so never post to another host just because a row names it.
+PUSH_HOSTS = ("fcm.googleapis.com", "updates.push.services.mozilla.com", ".notify.windows.com", ".push.apple.com")
+
+
+def push_service(endpoint: str) -> bool:
+    url = urlsplit(endpoint)
+    host = url.hostname or ""
+    return url.scheme == "https" and any(host == h or (h.startswith(".") and host.endswith(h)) for h in PUSH_HOSTS)
+
+
 HEADLINE_COURSES = ["main", "stir_fry", "soup", "staple"]  # as in app/src/components/day-summary.tsx
 MEAL_ORDER = ["breakfast", "morning_snack", "lunch", "snack"]
 
@@ -72,6 +84,10 @@ def run(day: str, dry_run: bool):
     claims = {"sub": os.getenv("VAPID_SUBJECT") or "mailto:noreply@ksmeals.app"}
     sent = skipped = gone = failed = 0
     for s in subs:
+        if not push_service(s["endpoint"]):
+            failed += 1
+            print(f"  not a browser push service, skipped: {urlsplit(s['endpoint']).hostname}")
+            continue
         msg = message(by_school.get(s["school_id"], []), s["allergies"] or [])
         if not msg:
             skipped += 1
