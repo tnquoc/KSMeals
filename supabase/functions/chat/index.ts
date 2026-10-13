@@ -160,10 +160,12 @@ const MODELS = [LLM_MODEL, ...(Deno.env.get("LLM_FALLBACK_MODELS") ?? "gemini-3.
   .filter((m, i, all) => m && all.indexOf(m) === i);
 const RETRYABLE = new Set([429, 500, 503]);
 
-const ATTEMPT_MS = 25_000; // an overloaded model sometimes hangs instead of answering 503
+const ATTEMPT_MS = 15_000; // an overloaded model sometimes hangs instead of answering 503
 const BUDGET_MS = 45_000; // stop trying well before the app (60 s) and the platform give up
 
-/** One chat completion: each model once more after a short pause, then the next model. */
+/** One chat completion: each model once more after a short pause, then the next model.
+ * A model that hangs is not asked again: two hangs used to eat the whole budget, so the
+ * fallback model (which was answering in seconds) never got its turn. */
 async function complete(messages: { role: string; content: string }[]): Promise<Response> {
   const deadline = Date.now() + BUDGET_MS;
   let last = new Response("timeout", { status: 503 });
@@ -181,7 +183,7 @@ async function complete(messages: { role: string; content: string }[]): Promise<
       } catch (e) {
         console.error("llm", model, "timed out or failed", e);
         last = new Response("timeout", { status: 503 });
-        continue;
+        break;
       }
       if (last.ok || !RETRYABLE.has(last.status)) return last;
       console.error("llm", model, last.status, (await last.text()).slice(0, 200));
