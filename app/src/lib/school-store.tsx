@@ -5,6 +5,7 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 import { track } from '@/lib/analytics';
 import type { School } from '@/lib/api';
 import { forgetDeviceId } from '@/lib/device';
+import { forgetMenus } from '@/lib/menu-cache';
 import { disablePush, syncPush } from '@/lib/push';
 
 const SCHOOL_KEY = 'ksmeals.school';
@@ -65,6 +66,7 @@ export function SchoolProvider({ children }: { children: ReactNode }) {
     const keys = (await AsyncStorage.getAllKeys()).filter((k) => k.startsWith('ksmeals.'));
     await AsyncStorage.multiRemove(keys);
     forgetDeviceId();
+    forgetMenus();
     setSchoolState(null);
     setAllergies([]);
   };

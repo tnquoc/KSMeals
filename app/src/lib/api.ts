@@ -57,13 +57,21 @@ function config() {
   return { url: SUPABASE_URL, key: PUBLISHABLE_KEY };
 }
 
+const TIMEOUT_MS = 15_000; // on a bad mobile connection a request can hang instead of failing
+
 async function get<T>(path: string): Promise<T> {
   const { url, key } = config();
-  const res = await fetch(`${url}/rest/v1/${path}`, { headers: { apikey: key } });
-  if (!res.ok) {
-    throw new Error(`Supabase ${res.status}: ${await res.text()}`);
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  try {
+    const res = await fetch(`${url}/rest/v1/${path}`, { headers: { apikey: key }, signal: controller.signal });
+    if (!res.ok) {
+      throw new Error(`Supabase ${res.status}: ${await res.text()}`);
+    }
+    return (await res.json()) as T;
+  } finally {
+    clearTimeout(timer);
   }
-  return res.json() as Promise<T>;
 }
 
 const PAGE = 1000; // Supabase returns at most 1000 rows per request
@@ -100,23 +108,19 @@ export async function requestSchool(deviceId: string, code: string): Promise<num
   return res.json();
 }
 
-export function fetchMeals(schoolId: number, from: string, to: string): Promise<Meal[]> {
-  return get(
+export type Menu = { meals: Meal[]; sources: Record<number, SourcePost> };
+
+/** Meals of one school between two dates, with the school's posts they were read from, in one request. */
+export async function fetchMenu(schoolId: number, from: string, to: string): Promise<Menu> {
+  const rows = await get<(Meal & { raw_posts: SourcePost | null })[]>(
     'meals?select=date,meal_type,dishes,courses,tray_image_urls,nutrition,ai_note,allergens,dish_allergens,ingredients,source_post_id' +
+      ',raw_posts(id,url,title,kind,image_urls,doc_urls)' +
       `&school_id=eq.${schoolId}&date=gte.${from}&date=lte.${to}&order=date`,
   );
-}
-
-export async function fetchSources(ids: number[]): Promise<Record<number, SourcePost>> {
-  if (!ids.length) return {};
-  const filter = `id=in.(${ids.join(',')})`;
-  const rows = await get<Omit<SourcePost, 'image_urls' | 'doc_urls'>[]>(`raw_posts?select=id,url,title,kind&${filter}`);
-  // Media columns need migration 0005; without it the links still work.
-  const media = await get<Pick<SourcePost, 'id' | 'image_urls' | 'doc_urls'>[]>(
-    `raw_posts?select=id,image_urls,doc_urls&${filter}`,
-  ).catch(() => []);
-  const byId = Object.fromEntries(media.map((m) => [m.id, m]));
-  return Object.fromEntries(
-    rows.map((p) => [p.id, { ...p, image_urls: byId[p.id]?.image_urls ?? [], doc_urls: byId[p.id]?.doc_urls ?? [] }]),
-  );
+  const sources: Record<number, SourcePost> = {};
+  const meals = rows.map(({ raw_posts: post, ...meal }) => {
+    if (post) sources[post.id] = { ...post, image_urls: post.image_urls ?? [], doc_urls: post.doc_urls ?? [] };
+    return meal;
+  });
+  return { meals, sources };
 }

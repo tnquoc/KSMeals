@@ -4,6 +4,7 @@ import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
 import { DayMenu } from '@/components/day-menu';
 import { DaySummary } from '@/components/day-summary';
+import { LoadFailed } from '@/components/load-failed';
 import { SchoolStart } from '@/components/no-school';
 import { PageHeader } from '@/components/page-header';
 import { SchoolPill } from '@/components/school-pill';
@@ -50,7 +51,7 @@ export default function TodayScreen() {
   const [today] = useState(() => new Date());
   const thisMonday = mondayOf(today);
   // This week and next week in one request; which one to show depends on what is posted.
-  const { meals, sources, loading, refreshing, error, reload } = useMeals(school?.id, thisMonday, addDays(thisMonday, 11));
+  const { meals, sources, loading, refreshing, failed, reload } = useMeals(school?.id, thisMonday, addDays(thisMonday, 11));
   const [picked, setPicked] = useState<Date | null>(null);
 
   if (!loaded) return <Screen>{null}</Screen>;
@@ -83,9 +84,11 @@ export default function TodayScreen() {
         <SchoolPill />
       </PageHeader>
 
+      {failed ? <LoadFailed saved={meals.length > 0} onRetry={reload} /> : null}
       {loading ? (
         <ActivityIndicator style={styles.spinner} />
-      ) : (
+      ) : failed && !meals.length ? null : (
+        // Nothing loaded is not "the school has not posted": only show the days once we know.
         <>
           {fallback ? (
             <ThemedText type="small" themeColor="textSecondary">
@@ -126,7 +129,6 @@ export default function TodayScreen() {
           {meals.some((m) => m.date === iso(selected) && m.dishes.length) ? (
             <ShareButton school={school} day={selected} meals={meals.filter((m) => m.date === iso(selected))} />
           ) : null}
-          {error ? <ThemedText style={{ color: theme.warn }}>Không tải được thực đơn: {error}</ThemedText> : null}
           <DayMenu meals={meals.filter((m) => m.date === iso(selected))} sources={sources} />
         </>
       )}

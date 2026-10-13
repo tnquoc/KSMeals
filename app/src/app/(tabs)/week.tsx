@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
 import { DayMenu } from '@/components/day-menu';
+import { LoadFailed } from '@/components/load-failed';
 import { NoSchool } from '@/components/no-school';
 import { PageHeader } from '@/components/page-header';
 import { SchoolPill } from '@/components/school-pill';
@@ -32,7 +33,7 @@ export default function WeekScreen() {
   // null = automatic week (see displayWeek); set once the user navigates.
   const [chosen, setChosen] = useState<Date | null>(null);
   const from = chosen ?? thisMonday;
-  const { meals, sources, loading, refreshing, error, reload } = useMeals(school?.id, from, addDays(from, chosen ? 4 : 11));
+  const { meals, sources, loading, refreshing, failed, reload } = useMeals(school?.id, from, addDays(from, chosen ? 4 : 11));
   useEffect(() => {
     if (school) track('view_week', school.code, { offset: chosen ? Math.round((chosen.getTime() - thisMonday.getTime()) / 604800000) : 0 });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -70,10 +71,12 @@ export default function WeekScreen() {
           Trường chưa đăng thực đơn tuần sau, đang hiện thực đơn tuần này.
         </ThemedText>
       ) : null}
-      {error ? <ThemedText style={{ color: theme.warn }}>Không tải được thực đơn: {error}</ThemedText> : null}
+      {failed ? <LoadFailed saved={meals.length > 0} onRetry={reload} /> : null}
 
       {loading ? <ActivityIndicator style={styles.spinner} /> : null}
+      {/* Nothing loaded is not "the school has not posted": only list the days once we know. */}
       {!loading &&
+        !(failed && !meals.length) &&
         weekDays(monday).map((d) => {
           const dayMeals = meals.filter((m) => m.date === iso(d));
           const flagged = dayMeals.reduce((n, m) => n + allergyHits(m, allergies).count, 0);
