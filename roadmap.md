@@ -153,7 +153,8 @@ Thư mục `app/`, Expo SDK 57 + Expo Router, TypeScript. Chạy: `cd app && npx
 - [x] Chính sách quyền riêng tư (bắt buộc): https://tnquoc.github.io/KSMeals/privacy
 - [ ] Icon, ảnh chụp màn hình, mô tả có từ khóa: "thực đơn bán trú", "bữa ăn học đường", "suất ăn trường học TP.HCM"
 - [ ] Làm mờ mặt trẻ trong ảnh khay trước khi hiển thị
-- [ ] Google Play: closed testing với nhóm tester (tài khoản cá nhân mới cần khoảng 12 tester trong 14 ngày, kiểm tra lại chính sách hiện hành)
+- [x] Google Play: closed testing với nhóm tester (12 tester x 14 ngày xong 2026-10-27; nộp đơn production 2026-10-29, Google cấp quyền production 2026-10-31)
+- [ ] Google Play: tạo bản phát hành production (chọn bản bundle, quốc gia Việt Nam, gửi duyệt)
 - [ ] App Store: trong mô tả gửi duyệt, nhấn mạnh push, dinh dưỡng AI, chatbot (tránh bị coi là app "chỉ hiển thị lại website")
 
 ---
