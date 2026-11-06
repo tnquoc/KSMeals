@@ -154,7 +154,9 @@ Thư mục `app/`, Expo SDK 57 + Expo Router, TypeScript. Chạy: `cd app && npx
 - [ ] Icon, ảnh chụp màn hình, mô tả có từ khóa: "thực đơn bán trú", "bữa ăn học đường", "suất ăn trường học TP.HCM"
 - [ ] Làm mờ mặt trẻ trong ảnh khay trước khi hiển thị
 - [x] Google Play: closed testing với nhóm tester (12 tester x 14 ngày xong 2026-10-27; nộp đơn production 2026-10-29, Google cấp quyền production 2026-10-31)
-- [ ] Google Play: tạo bản phát hành production (chọn bản bundle, quốc gia Việt Nam, gửi duyệt)
+- [x] Google Play: tạo bản phát hành production (bản 9 có R8, Việt Nam, gửi duyệt 2026-11-07)
+- [ ] Google Play: Google duyệt xong, app lên CH Play công khai
+- [ ] Google Play: khai báo tư cách người bán (hạn 2027-02-01)
 - [ ] App Store: trong mô tả gửi duyệt, nhấn mạnh push, dinh dưỡng AI, chatbot (tránh bị coi là app "chỉ hiển thị lại website")
 
 ---
