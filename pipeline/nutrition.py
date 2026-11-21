@@ -107,14 +107,15 @@ def retag(store: Store, today: date | None = None) -> int:
     that queue for days, and a parent who set an allergy would see no alert on them."""
     since = (today or date.today()) - timedelta(days=RETAG_DAYS)
     rows = store.select("meals", select="school_id,date,meal_type,dishes,ingredients,allergens,dish_allergens",
-                        status="eq.published", date=f"gte.{since}")
-    changed = []
+                        status="eq.published", date=f"gte.{since}", order="school_id,date,meal_type")
+    changed = {}  # keyed like the upsert: a row read twice (paging while rows change) must be sent once
     for r in rows:
         dishes = r["dishes"] or []
         tags = {"allergens": detect(dishes + (r["ingredients"] or [])), "dish_allergens": [detect([d]) for d in dishes]}
         if tags["allergens"] != r["allergens"] or tags["dish_allergens"] != r["dish_allergens"]:
-            changed.append({"school_id": r["school_id"], "date": r["date"], "meal_type": r["meal_type"], **tags})
-    store.upsert("meals", changed, "school_id,date,meal_type")
+            changed[(r["school_id"], r["date"], r["meal_type"])] = {
+                "school_id": r["school_id"], "date": r["date"], "meal_type": r["meal_type"], **tags}
+    store.upsert("meals", list(changed.values()), "school_id,date,meal_type")
     return len(changed)
 
 
